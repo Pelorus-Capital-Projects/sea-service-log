@@ -4325,7 +4325,7 @@ window.MiniPDF = (function(){
   }
   const normUser = s => String(s || '').trim().toLowerCase();
   // "Tony Kart", "tonykart" and "TONY-KART!" all count as the same answer.
-  const normAnswer = s => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normAnswer = s => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
   function parseAuth(raw){
     const a = safeParse(raw, null);
