@@ -1,0 +1,4041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sea Service">
+<meta name="theme-color" content="#15385A">
+<title>Sea Service Log</title>
+<link rel="icon" id="faviconLink" type="image/svg+xml" href="">
+<link rel="apple-touch-icon" id="appleTouchIcon" href="">
+<script>
+(function(){
+  // Pelorus Capital Projects mark — Option D, "Cross bearing": four lines
+  // closing in from the corners to an open ring at center. Frozen (no
+  // animation) since home-screen icons and favicons can't animate.
+  var iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">'
+    + '<rect width="180" height="180" fill="#15385A"/>'
+    + '<line x1="24" y1="24" x2="90" y2="90" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/>'
+    + '<line x1="156" y1="156" x2="90" y2="90" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/>'
+    + '<line x1="156" y1="24" x2="90" y2="90" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/>'
+    + '<line x1="24" y1="156" x2="90" y2="90" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/>'
+    + '<circle cx="90" cy="90" r="11" fill="#15385A" stroke="#C9A227" stroke-width="6"/>'
+    + '</svg>';
+
+  var svgDataUri = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+  document.getElementById('faviconLink').href = svgDataUri;
+
+  var img = new Image();
+  img.onload = function(){
+    var canvas = document.createElement('canvas');
+    canvas.width = 180; canvas.height = 180;
+    canvas.getContext('2d').drawImage(img, 0, 0, 180, 180);
+    document.getElementById('appleTouchIcon').href = canvas.toDataURL('image/png');
+  };
+  img.src = svgDataUri;
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<style>
+  :root{
+    color-scheme: dark;
+    --surface:#1C4166;
+    --surface-2:#264F78;
+    --surface-3:#2F5D89;
+    --text:#E9E4D6;
+    --text-muted:#93A6B5;
+    --border: rgba(233,228,214,0.12);
+    --gold:#C9A227;
+    --onboard:#4C8FBD;
+    --general:#A85C7A;
+    --sea:#3E9C8F;
+    --yard:#B5651D;
+    --standby:#8073B0;
+    --disembarked:#5C6B73;
+    --danger:#B4543A;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  /* Keep content clear of the notch and home bar when shown edge to edge. */
+  :root{ box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body{
+    background: radial-gradient(ellipse at top, #1A4468 0%, #123353 70%);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding-bottom: 40px;
+  }
+  .app{
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 0 18px;
+  }
+  .a2hs-banner{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    padding: 5px 6px 5px 14px;
+    margin: 12px 0 0;
+  }
+  .a2hs-text{ flex:1; font-size: 12.5px; color: var(--text-muted); line-height: 1.3; }
+  .a2hs-text strong{ color: var(--text); font-weight:600; }
+  .a2hs-banner #a2hsShowBtn{
+    background: var(--gold);
+    color: #14202B;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor:pointer;
+  }
+  .a2hs-banner #a2hsDismissBtn{
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px;
+    cursor:pointer;
+  }
+
+  .quick-label{
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 6px 2px 8px;
+  }
+  .preset-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 14px; }
+  .preset-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 9px 13px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .preset-chip:active{ background: var(--surface-3); }
+  .preset-chip.active{ border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+  .preset-chip.copy{ border-style: dashed; }
+  .preset-chip .mini{ display:inline-flex; gap:2px; }
+  .preset-chip .mini span{
+    min-width:15px; height:15px; border-radius:4px;
+    font-size:9px; line-height:15px; text-align:center;
+    font-weight:700; color:#14202B;
+  }
+  .overlap-warning{
+    margin-top: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .backup-reminder{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 12px 12px 12px 14px;
+    margin-top: 12px;
+  }
+  .backup-reminder button{
+    background: var(--gold);
+    color: #14202B;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor:pointer;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(20px);
+    background: var(--gold);
+    color:#14202B;
+    font-weight:600;
+    font-size:13.5px;
+    padding:10px 16px;
+    border-radius: 999px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 100;
+    max-width: 90%;
+    text-align:center;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+  .toast.actionable{
+    pointer-events:auto;
+    display:flex; align-items:center; gap:12px;
+    padding: 7px 7px 7px 16px;
+    text-align:left;
+  }
+  .toast-undo{
+    background:#14202B; color: var(--gold);
+    border:none; border-radius:999px;
+    padding: 7px 15px;
+    font-family:'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 700;
+    cursor:pointer; white-space:nowrap;
+  }
+  .restore-summary{
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  header.top{
+    padding: 28px 4px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  header.top h1{
+    font-family:'Spectral', serif;
+    font-weight:600;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+  header.top p{
+    margin:0;
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .header-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+  .avatar{
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1.5px dashed var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    flex-shrink:0;
+    cursor:pointer;
+    color: var(--text-muted);
+    font-size: 22px;
+    font-weight: 300;
+  }
+  .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .avatar .ph{ display:flex; flex-direction:column; align-items:center; line-height:1; }
+  .avatar .ph-plus{ font-size: 20px; }
+  .avatar .ph-text{ font-size: 8.5px; font-weight: 600; letter-spacing: .2px; margin-top: 2px; font-family:'IBM Plex Sans', sans-serif; }
+  .header-text{ flex:1; min-width:0; }
+  .title-row{
+    display:flex;
+    align-items:baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .title-row h1{ margin:0; }
+  .title-row .edit-link{ font-size: 11px; }
+
+  .tabs{
+    display:flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding: 9px 4px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor:pointer;
+    transition: background .2s ease, color .2s ease;
+    user-select:none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tab.active{
+    background: var(--gold);
+    color: #14202B;
+  }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform: translateY(4px);} to{opacity:1; transform:none;} }
+
+  /* Calendar */
+  .cal-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 14px;
+  }
+  .month-jump{ position:relative; display:inline-flex; align-items:baseline; gap:6px; cursor:pointer; }
+  .month-jump input{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; border:0; padding:0; margin:0; cursor:pointer;
+    font-size:16px; /* 16px stops iOS zooming in when the picker opens */
+  }
+  .month-caret{ color: var(--gold); font-size: 13px; }
+  .cal-nav .month-label{
+    font-family:'Spectral', serif;
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .cal-nav button{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px; height:36px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor:pointer;
+  }
+  .cal-nav button:active{ background: var(--surface-2); }
+  .today-link{
+    display:block;
+    margin: 2px auto 0;
+    background: none !important;
+    border: none !important;
+    width: auto !important;
+    height: auto !important;
+    color: var(--gold) !important;
+    font-size: 11.5px !important;
+    font-weight: 600;
+    padding: 2px 0 0;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  .weekdays{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 6px;
+  }
+  .weekdays span{
+    text-align:center;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight:600;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .day{
+    position:relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:600;
+    color: var(--text);
+  }
+  .day.pad{ visibility:hidden; pointer-events:none; }
+  /* Today: the date sits in a solid gold circle, distinct from logged days' gold border. */
+  .day.today > span:first-child{
+    background: var(--gold);
+    color: #14202B;
+    border-radius: 999px;
+    min-width: 26px;
+    height: 26px;
+    line-height: 26px;
+    padding: 0 4px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .day.today.logged > span:first-child{ transform: translateY(-5px); }
+  .day:active{ background: var(--surface-2); }
+  .day .dots{
+    position:absolute;
+    bottom: 3px;
+    display:flex;
+    flex-wrap: wrap;
+    justify-content:center;
+    gap: 2px;
+    width: 100%;
+    padding: 0 2px;
+  }
+  .tag-dot{
+    min-width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    font-size: 7px;
+    line-height: 11px;
+    font-weight: 700;
+    text-align: center;
+    color: #14202B;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .day.logged{ background: var(--surface-2); border-color: var(--gold); }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 10px 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .legend-swatch{
+    width:16px; height:16px; border-radius:4px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; color:#14202B;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  /* Totals */
+  .hero-card{
+    background: linear-gradient(160deg, var(--surface-3), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    margin-bottom: 16px;
+  }
+  .hero-card .label{
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .hero-card .value{
+    font-family:'Spectral', serif;
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--gold);
+  }
+  .hero-card .value span{
+    font-size: 18px;
+    font-weight:500;
+    color: var(--text-muted);
+    margin-left: 6px;
+  }
+  .hero-card .hero-sub{
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .month-summary{
+    margin-top: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .ms-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .ms-title{ font-size: 13.5px; font-weight: 600; }
+  .ms-count{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+  .ms-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
+  .ms-empty{ font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+  .since-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .since-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .since-label{ font-size: 14px; font-weight: 600; }
+  .since-sub{ font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+  .since-value{ font-family:'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+  .since-breakdown{ display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top: 10px; }
+  .since-chip{
+    display:inline-flex; align-items:center; gap:5px;
+    background: var(--surface-2); border-radius: 999px; padding: 3px 9px 3px 3px;
+    font-family:'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text);
+  }
+  .since-chip .b{
+    min-width:16px; height:16px; border-radius:4px; line-height:16px; text-align:center;
+    font-family:'IBM Plex Sans', sans-serif; font-size:9px; font-weight:700; color:#14202B;
+  }
+  .stat-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent, var(--gold));
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+  }
+  .stat-card .n{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+  }
+  .stat-card .l{
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .disembark-card{
+    margin-top: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--disembarked);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .disembark-card .n{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight:600;
+  }
+
+  .export-row{
+    margin-top: 22px;
+    text-align:center;
+  }
+  .export-row button{
+    display:block;
+    width:100%;
+    background:none;
+    border:none;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor:pointer;
+    padding: 6px 0;
+  }
+
+  .profile-photo-row{ display:flex; align-items:center; gap:14px; margin: 4px 0 14px; }
+  .avatar.avatar-lg{ width:64px; height:64px; }
+  .sig-saved{ background:#ffffff; border-radius:10px; padding:10px; margin-bottom:10px; text-align:center; }
+  .sig-saved img{ max-width:100%; max-height:70px; display:inline-block; }
+  .settings-disclosure{
+    margin-top: 22px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+  .settings-disclosure summary{
+    list-style: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px;
+  }
+  .settings-disclosure summary::-webkit-details-marker{ display:none; }
+  .settings-disclosure summary::after{
+    content: '▾';
+    font-size: 12px;
+    transition: transform .2s ease;
+    color: var(--gold);
+  }
+  .settings-disclosure[open] summary::after{ transform: rotate(180deg); }
+  .settings-disclosure .baseline-section:first-of-type{ margin-top: 16px; }
+
+  .stacked-field{ margin-bottom: 12px; }
+  .stacked-field label{
+    display:block;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .stacked-field input{
+    width:100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+  }
+  .stacked-field-row{ display:flex; gap:10px; }
+  .stacked-field-row .stacked-field{ flex:1; }
+
+  .baseline-section{
+    margin-top: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px 6px;
+  }
+  .baseline-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .baseline-title{
+    font-size: 13.5px;
+    color: var(--text-muted);
+  }
+  .edit-link{
+    background:none;
+    border:none;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight:600;
+    cursor:pointer;
+    padding: 2px 4px;
+  }
+  .baseline-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .baseline-row:last-child{ border-bottom:none; }
+  .baseline-row .dot{ width:8px; height:8px; border-radius:50%; margin-right:8px; display:inline-block; vertical-align:middle;}
+  .baseline-row .n{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+
+  .field-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 10px 2px;
+    gap: 12px;
+  }
+  .field-row label{ font-size: 14.5px; font-weight:500; }
+  .field-row input{
+    width: 84px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    padding: 8px 10px;
+    text-align:right;
+  }
+  .field-row input:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  .range-picker{
+    margin-top: 4px;
+    padding: 14px 4px 4px;
+    border-top: 1px solid var(--border);
+  }
+  .range-title{
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .range-row{
+    display:flex;
+    gap: 10px;
+  }
+  .range-row > div{ flex:1; }
+  .range-row label{
+    display:block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .range-row input[type="date"]{
+    width:100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 9px 8px;
+  }
+
+  .summary-section{
+    margin-top: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .summary-title{
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .period-tabs{
+    display:flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 12px;
+  }
+  .period-tab{
+    flex:1;
+    text-align:center;
+    padding: 8px 0;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor:pointer;
+    user-select:none;
+  }
+  .period-tab.active{ background: var(--gold); color:#14202B; }
+  .mode-tabs{
+    display:flex; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px; margin-bottom: 12px;
+  }
+  .mode-tab{
+    flex:1; text-align:center; padding: 8px 0; border-radius: 999px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted); cursor:pointer; user-select:none;
+  }
+  .mode-tab.active{ background: var(--gold); color:#14202B; }
+  .week-tab{
+    flex:1; text-align:center; padding: 8px 0; border-radius: 999px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted); cursor:pointer; user-select:none;
+  }
+  .week-tab.active{ background: var(--gold); color:#14202B; }
+  .sig-pad-wrap{ position:relative; margin-bottom: 6px; }
+  .sig-pad{
+    display:block; width:100%; height:170px;
+    background:#ffffff; border-radius: 10px;
+    touch-action: none; cursor: crosshair;
+  }
+  .sig-pad-line{
+    position:absolute; left:18px; right:18px; bottom:38px;
+    border-bottom: 1.5px dashed #b9c2cc; pointer-events:none;
+  }
+  .sig-pad-hint{
+    position:absolute; left:0; right:0; bottom:14px; text-align:center;
+    font-size: 12.5px; color:#8a96a3; pointer-events:none;
+  }
+  .pad-actions{ display:flex; justify-content:flex-end; margin-bottom: 8px; }
+  .period-picker input[type="month"],
+  .period-picker input[type="date"]{
+    width:100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 10px 8px;
+  }
+  .period-picker .range-row{ margin-top:0; }
+
+  .sig-preview-box{
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align:center;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 14px;
+    min-height: 64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  #sigPreviewBox{ cursor:pointer; }
+  #sigPreviewBox:active{ background: var(--surface-2); }
+  .sig-error{
+    color: var(--danger);
+    font-size: 12.5px;
+    margin-top: -4px;
+    margin-bottom: 6px;
+  }
+
+  /* Sheet */
+  .overlay{
+    position:fixed; inset:0;
+    background: rgba(5,12,20,0.6);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index: 50;
+  }
+  .overlay.show{ display:flex; }
+  /* A sheet never grows taller than the screen: when its content is longer
+     (small iPhones, or a day with the date range and a warning showing) it
+     scrolls inside itself, so the top is always reachable. */
+  .overlay .sheet{
+    max-height: calc(100vh - env(safe-area-inset-top, 0px) - 12px);
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .sheet{
+    width:100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+    animation: slideup .22s ease;
+  }
+  @keyframes slideup{ from{ transform: translateY(30px); opacity:0;} to{transform:none; opacity:1;} }
+  .sheet-handle{
+    width:36px; height:4px; background: var(--border); border-radius:2px;
+    margin: 0 auto 16px;
+  }
+  .sheet h2{
+    font-family:'Spectral', serif;
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+  .sheet .sub{
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+  .option{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+    cursor:pointer;
+  }
+  .option:last-of-type{ border-bottom:none; }
+  .checkbox{
+    width: 20px; height:20px;
+    border-radius:6px;
+    border: 2px solid var(--text-muted);
+    flex-shrink:0;
+    position:relative;
+  }
+  .checkbox.checked{ border-color: var(--gold); background: var(--gold); }
+  .checkbox.checked::after{
+    content:'✓';
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #14202B;
+  }
+  .option .opt-badge{
+    width:20px; height:20px; border-radius:5px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Sans', sans-serif; font-size:10.5px; font-weight:700; color:#14202B;
+  }
+  .sheet-warning{
+    margin: 8px 0 4px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--danger);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .option .name{ font-size:15px; font-weight:500; flex:1; }
+
+  .sheet-actions{
+    display:flex;
+    gap:10px;
+    margin-top: 20px;
+  }
+  .btn{
+    flex:1;
+    padding: 13px 0;
+    border-radius: 10px;
+    border:none;
+    font-size: 14.5px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .btn-primary{ background: var(--gold); color:#14202B; }
+  .btn-ghost{ background: var(--surface-2); color: var(--text); border:1px solid var(--border); }
+  .btn-clear{ background: transparent; color: var(--danger); border: 1px solid rgba(180,84,58,0.4); }
+  .btn:disabled{ opacity:0.45; pointer-events:none; }
+
+  .sig-status{
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="a2hs-banner" id="a2hsBanner" style="display:none;">
+    <div class="a2hs-text"><strong>Add to your Home Screen</strong></div>
+    <button id="a2hsShowBtn">How?</button>
+    <button id="a2hsDismissBtn" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <header class="top">
+    <div class="header-row">
+      <div class="avatar" id="avatarBox" title="Tap to add a photo">
+        <span class="ph" id="avatarPlaceholder"><span class="ph-plus">+</span><span class="ph-text">Add photo</span></span>
+      </div>
+      <div class="header-text">
+        <div class="title-row">
+          <h1 id="appTitle">Sea Service Log</h1>
+          <button class="edit-link" id="editTitleBtn">Rename</button>
+        </div>
+        <p>Your personal record of days aboard.</p>
+      </div>
+    </div>
+    <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="calendar">Calendar</div>
+    <div class="tab" data-tab="totals">Totals</div>
+    <div class="tab" data-tab="profile">Crew Profile</div>
+  </div>
+
+  <!-- CALENDAR PANEL -->
+  <div class="panel active" id="panel-calendar">
+    <div class="cal-nav">
+      <button id="prevMonth">‹</button>
+      <div style="text-align:center;">
+        <label class="month-jump" title="Jump to a month">
+          <span class="month-label" id="monthLabel"></span><span class="month-caret">▾</span>
+          <input type="month" id="jumpMonth" aria-label="Jump to a month">
+        </label>
+        <button id="todayBtn" class="today-link">Today</button>
+      </div>
+      <button id="nextMonth">›</button>
+    </div>
+    <div class="weekdays" id="weekdayRow">
+      <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+    </div>
+    <div class="grid" id="calGrid"></div>
+    <div class="month-summary" id="monthSummary"></div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--general)">B</span>On Board Service</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--sea)">S</span>Sea Service</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--gold)">W</span>Navigational Watchkeeping</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--standby)">T</span>Standby Service</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--yard)">Y</span>Yard Service</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--disembarked)">D</span>Disembarked</div>
+    </div>
+  </div>
+
+  <!-- TOTALS PANEL -->
+  <div class="panel" id="panel-totals">
+    <div class="hero-card">
+      <div class="label">Onboard Service — total time on board</div>
+      <div class="value" id="totalOnboard">0<span>days</span></div>
+      <div class="hero-sub">Counted automatically: any day you log a category counts here, except days marked only Disembarked.</div>
+    </div>
+
+    <div class="since-card">
+      <div class="since-top">
+        <div>
+          <div class="since-label">Logged in this app</div>
+          <div class="since-sub" id="sinceSub"></div>
+        </div>
+        <div class="since-value" id="sinceTotal">+0</div>
+      </div>
+      <div class="since-breakdown" id="sinceBreakdown"></div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card" style="--accent:var(--sea)">
+        <div class="n" id="totalSea">0</div>
+        <div class="l">Sea Service</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--gold)">
+        <div class="n" id="totalWatch">0</div>
+        <div class="l">Navigational Watchkeeping</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--standby)">
+        <div class="n" id="totalStandby">0</div>
+        <div class="l">Standby Service</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--yard)">
+        <div class="n" id="totalYard">0</div>
+        <div class="l">Yard Service</div>
+      </div>
+    </div>
+
+    <div class="disembark-card">
+      <div>
+        <div class="l" style="color:var(--text-muted); font-size:13px;">Days disembarked</div>
+        <div class="n" id="totalDisembarked">0</div>
+      </div>
+      <span class="legend-swatch" style="background:var(--disembarked); width:14px; height:14px;">D</span>
+    </div>
+
+    <div class="overlap-warning" id="overlapWarning" style="display:none;"></div>
+
+    <div class="backup-reminder" id="backupReminder" style="display:none;">
+      <div class="a2hs-text">
+        <strong>Back up your log</strong>
+        <div id="backupReminderText">Keep a copy in case your phone clears saved data.</div>
+      </div>
+      <button id="backupReminderBtn">Back up</button>
+    </div>
+
+    <div class="summary-section">
+      <div class="summary-title">Download a period summary as PDF</div>
+      <div class="period-tabs">
+        <div class="period-tab active" data-period="month">Specific month</div>
+        <div class="period-tab" data-period="range">Date range</div>
+      </div>
+      <div class="period-picker" id="monthPicker">
+        <input type="month" id="monthInput">
+      </div>
+      <div class="period-picker" id="rangePicker" style="display:none;">
+        <div class="range-row">
+          <div>
+            <label for="summaryFrom">From</label>
+            <input type="date" id="summaryFrom">
+          </div>
+          <div>
+            <label for="summaryTo">To</label>
+            <input type="date" id="summaryTo">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="downloadPdfBtn" style="width:100%; margin-top:14px;">Sign &amp; download PDF</button>
+      <button class="btn btn-ghost" id="draftPdfBtn" style="width:100%; margin-top:10px;">Unsigned draft — no code needed</button>
+    </div>
+
+    <details class="settings-disclosure">
+      <summary>Settings</summary>
+
+      <div class="baseline-section">
+        <div class="baseline-header">
+          <div class="baseline-title">Calendar</div>
+        </div>
+        <div class="sig-status">Week starts on</div>
+        <div class="mode-tabs" style="margin-bottom:14px;">
+          <div class="week-tab active" data-week="sunday">Sunday</div>
+          <div class="week-tab" data-week="monday">Monday</div>
+        </div>
+      </div>
+
+      <div class="baseline-section">
+        <div class="baseline-header">
+          <div class="baseline-title">Imported from your service record</div>
+          <button class="edit-link" id="editBaselineBtn">Edit</button>
+        </div>
+        <div id="baselineList"></div>
+      </div>
+
+      <div class="export-row">
+        <button id="a2hsSettingsBtn">Add to Home Screen instructions</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- CREW PROFILE PANEL -->
+  <div class="panel" id="panel-profile">
+    <div class="baseline-section" style="margin-top:0;">
+      <div class="baseline-header">
+        <div class="baseline-title">Crew profile</div>
+        <button class="edit-link" id="editProfileBtn">Edit</button>
+      </div>
+      <div class="profile-photo-row">
+        <div class="avatar avatar-lg" id="profileAvatar" title="Tap to add a photo"><span>+</span></div>
+        <div>
+          <button type="button" class="edit-link" id="profilePhotoBtn">Add photo</button>
+          <div class="sig-status" style="margin:2px 0 0;">Shown in the app header and on your PDFs.</div>
+        </div>
+      </div>
+      <div class="sig-status">Your details appear on your PDF downloads. Editing them requires your signature code once one is set up.</div>
+      <div id="profileList"></div>
+    </div>
+
+    <div class="baseline-section">
+      <div class="baseline-header">
+        <div class="baseline-title">Digital signature</div>
+      </div>
+      <div class="sig-saved" id="sigSavedPreview" style="display:none;"></div>
+      <div class="sig-status" id="sigStatusLine"></div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button class="btn btn-ghost" id="replaceSignatureBtn" style="flex:1;">Add / replace signature</button>
+        <button class="btn btn-ghost" id="changePasswordBtn" style="flex:1;">Change code</button>
+      </div>
+      <button class="btn btn-clear" id="removeSignatureBtn" style="width:100%; margin-bottom:10px;">Remove signature</button>
+    </div>
+
+    <div class="baseline-section">
+      <div class="baseline-header">
+        <div class="baseline-title">Backup &amp; data</div>
+      </div>
+      <div class="sig-status" id="storageStatusLine"></div>
+      <div class="sig-status">One backup file holds everything — calendar, totals, profile, signature and photo. Keep it private: it includes your signature code.</div>
+      <div class="sig-status" id="lastBackupLine" style="margin-top:-6px;"></div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button class="btn btn-primary" id="backupBtn" style="flex:1;">Download backup</button>
+        <button class="btn btn-ghost" id="restoreBtn" style="flex:1;">Upload backup</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DAY EDITOR SHEET -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetDate">Date</h2>
+    <div class="sub">One tap logs a common day. For anything else, tick the categories below — ticking also lets you apply them across a range of dates.</div>
+
+    <div class="quick-label">Quick log</div>
+    <div class="preset-row" id="presetRow"></div>
+
+    <div class="quick-label">Or tick categories</div>
+    <div id="optionsList"></div>
+    <div class="sheet-warning" id="conflictWarning" style="display:none;"></div>
+    <div class="pad-actions" style="margin-top:6px;">
+      <button type="button" class="edit-link" id="clearRangeLink">Clear several days…</button>
+    </div>
+
+    <div class="range-picker" id="dateRangePicker" style="display:none;">
+      <div class="range-title" id="rangeTitle">Apply the ticked categories to a range of days? Pick any past or future dates.</div>
+      <div class="range-row">
+        <div>
+          <label for="rangeFrom">From</label>
+          <input type="date" id="rangeFrom">
+        </div>
+        <div>
+          <label for="rangeTo">To</label>
+          <input type="date" id="rangeTo">
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-clear" id="clearBtn">Clear day</button>
+      <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BASELINE EDIT SHEET -->
+<div class="overlay" id="baselineOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Imported history</h2>
+    <div class="sub">Totals from before you started using this app. These add to whatever you log on the calendar.</div>
+    <button class="edit-link" id="restoreImportedBtn" style="margin-bottom:14px;">Restore imported values</button>
+
+    <div class="field-row">
+      <label>Onboard Service</label>
+      <input type="number" min="0" id="baseOnboard">
+    </div>
+    <div class="field-row">
+      <label>Sea Service</label>
+      <input type="number" min="0" id="baseSea">
+    </div>
+    <div class="field-row">
+      <label>Navigational Watchkeeping</label>
+      <input type="number" min="0" id="baseWatch">
+    </div>
+    <div class="field-row">
+      <label>Standby Service</label>
+      <input type="number" min="0" id="baseStandby">
+    </div>
+    <div class="field-row">
+      <label>Yard Service</label>
+      <input type="number" min="0" id="baseYard">
+    </div>
+    <div class="field-row">
+      <label>Days disembarked</label>
+      <input type="number" min="0" id="baseDisembarked">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="baselineCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="baselineSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGN & DOWNLOAD SHEET -->
+<div class="overlay" id="signOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="signHeading">Set up your signature</h2>
+    <div class="sub" id="signSub">Upload a PDF of your signature and choose a 4-digit code. It'll be reused automatically on every future download — you'll only need to enter the code.</div>
+
+    <div id="sigError" class="sig-error" style="display:none;"></div>
+
+    <div id="signSetupBlock">
+      <div class="mode-tabs">
+        <div class="mode-tab active" data-sigmode="draw">Draw</div>
+        <div class="mode-tab" data-sigmode="upload">Upload PDF</div>
+      </div>
+
+      <div id="sigDrawBlock">
+        <div class="sig-pad-wrap">
+          <canvas class="sig-pad" id="sigPad"></canvas>
+          <div class="sig-pad-line"></div>
+          <div class="sig-pad-hint" id="sigPadHint">Sign here with your finger</div>
+        </div>
+        <div class="pad-actions">
+          <button type="button" class="edit-link" id="sigPadClearBtn">Clear and start again</button>
+        </div>
+      </div>
+
+      <div id="sigUploadBlock" style="display:none;">
+        <input type="file" id="sigFileInput" accept="application/pdf,.pdf" style="display:none;">
+        <div class="sig-preview-box" id="sigPreviewBox">Tap to upload your signature (PDF)</div>
+      </div>
+
+      <div id="sigNewCodeRows">
+        <div class="field-row">
+          <label>Choose a 4-digit code</label>
+          <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="sigPinNew" placeholder="••••">
+        </div>
+        <div class="field-row">
+          <label>Confirm code</label>
+          <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="sigPinConfirm" placeholder="••••">
+        </div>
+      </div>
+
+      <div class="field-row" id="sigCurrentCodeRow" style="display:none;">
+        <label>Current 4-digit code</label>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="sigPinCurrent" placeholder="••••">
+      </div>
+    </div>
+
+    <div id="signEnterBlock" style="display:none;">
+      <div class="field-row">
+        <label>4-digit code</label>
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="sigPinEnter" placeholder="••••">
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="signCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="signConfirmBtn">Sign &amp; download</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD SHEET -->
+<div class="overlay" id="changePinOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Change your code</h2>
+    <div class="sub">Enter your current 4-digit code, then choose a new one.</div>
+
+    <div id="changePinError" class="sig-error" style="display:none;"></div>
+
+    <div class="field-row">
+      <label>Current code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="oldPinInput" placeholder="••••">
+    </div>
+    <div class="field-row">
+      <label>New code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="newPinInput" placeholder="••••">
+    </div>
+    <div class="field-row">
+      <label>Confirm new code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="newPinConfirmInput" placeholder="••••">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="changePinCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="changePinSaveBtn">Save new code</button>
+    </div>
+  </div>
+</div>
+
+<!-- REMOVE SIGNATURE SHEET -->
+<div class="overlay" id="removeSigOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Remove your signature</h2>
+    <div class="sub">Enter your 4-digit code to confirm. You'll need to upload a signature again before your next signed download.</div>
+
+    <div id="removeSigError" class="sig-error" style="display:none;"></div>
+
+    <div class="field-row">
+      <label>4-digit code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="removeSigPinInput" placeholder="••••">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="removeSigCancelBtn">Cancel</button>
+      <button class="btn btn-clear" id="removeSigConfirmBtn">Remove signature</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="sslToast" role="status" aria-live="polite"></div>
+
+<!-- RESTORE BACKUP SHEET -->
+<div class="overlay" id="restoreOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Restore from backup</h2>
+    <div class="sub">Choose a backup file you saved earlier. It replaces what is currently in the app.</div>
+
+    <input type="file" id="restoreFileInput" accept=".json,application/json" style="display:none;">
+    <button class="btn btn-ghost" id="restorePickBtn" style="width:100%;">Choose backup file</button>
+
+    <div class="restore-summary" id="restoreSummary" style="display:none;"></div>
+    <div id="restoreError" class="sig-error" style="display:none;"></div>
+
+    <div class="field-row" id="restorePinRow" style="display:none;">
+      <label>4-digit code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="restorePinInput" placeholder="••••">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="restoreCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="restoreConfirmBtn" disabled>Restore</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TO HOME SCREEN SHEET -->
+<div class="overlay" id="a2hsOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Add to Home Screen</h2>
+    <div class="sub">iOS doesn't let a webpage do this on its own — it only takes two taps in Safari.</div>
+
+    <div style="display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <path d="M12 2v13"/><path d="M8 6l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>
+      </svg>
+      <div style="font-size:14px;">Tap the <strong>Share</strong> icon in Safari's toolbar</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);">
+      <div style="width:22px; height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; color:#C9A227;">+</div>
+      <div style="font-size:14px;">Scroll down and tap <strong>Add to Home Screen</strong></div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; padding:12px 4px;">
+      <div style="width:22px; height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:#C9A227; font-weight:700;">✓</div>
+      <div style="font-size:14px;">Tap <strong>Add</strong> in the top right</div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-primary" id="a2hsCloseBtn" style="width:100%;">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- RENAME SHEET -->
+<div class="overlay" id="renameOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Rename this log</h2>
+    <div class="sub">Give your Sea Service Log a personal title.</div>
+    <input type="text" id="titleInput" maxlength="40" placeholder="Sea Service Log"
+      style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:16px; padding:11px 12px; box-sizing:border-box; margin-bottom:4px;">
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="renameCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="renameSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE PIN GATE -->
+<div class="overlay" id="profilePinOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Confirm it's you</h2>
+    <div class="sub">Enter your 4-digit signature code to edit your profile.</div>
+
+    <div id="profilePinError" class="sig-error" style="display:none;"></div>
+
+    <div class="field-row">
+      <label>4-digit code</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="profilePinInput" placeholder="••••">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="profilePinCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="profilePinConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE EDIT SHEET -->
+<div class="overlay" id="profileOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Edit your profile</h2>
+    <div class="sub">This information appears on your PDF downloads.</div>
+
+    <div class="stacked-field-row">
+      <div class="stacked-field">
+        <label for="profileName">Name</label>
+        <input type="text" id="profileName" maxlength="60">
+      </div>
+      <div class="stacked-field">
+        <label for="profileSurname">Surname</label>
+        <input type="text" id="profileSurname" maxlength="60">
+      </div>
+    </div>
+
+    <div class="stacked-field-row">
+      <div class="stacked-field">
+        <label for="profileNationality">Nationality</label>
+        <input type="text" id="profileNationality" maxlength="60">
+      </div>
+      <div class="stacked-field">
+        <label for="profileCoc">Current CoC</label>
+        <input type="text" id="profileCoc" maxlength="60">
+      </div>
+    </div>
+
+    <div class="stacked-field">
+      <label for="profileVesselName">Name of vessel</label>
+      <input type="text" id="profileVesselName" maxlength="80">
+    </div>
+
+    <div class="stacked-field-row">
+      <div class="stacked-field">
+        <label for="profileVesselGT">Vessel GT</label>
+        <input type="text" id="profileVesselGT" maxlength="30" placeholder="e.g. 969">
+      </div>
+      <div class="stacked-field">
+        <label for="profileVesselLength">Length of vessel</label>
+        <input type="text" id="profileVesselLength" maxlength="30" placeholder="e.g. 59.2m">
+      </div>
+    </div>
+
+    <div class="stacked-field">
+      <label for="profileRank">Rank on board</label>
+      <input type="text" id="profileRank" maxlength="60">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="profileCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="profileSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==MINIPDF-START==
+// Built-in PDF writer. Replaces the PDF library the app used to download,
+// so summaries can be created with no internet connection (e.g. at sea).
+// It draws exactly what the summary needs: text in the standard PDF fonts,
+// filled/outlined rectangles, lines, rounded boxes and JPEG images.
+window.MiniPDF = (function(){
+  const PAGE_W = 595.28, PAGE_H = 841.89; // A4 in points
+
+  // Character widths for printable ASCII (32–126), per 1000 units of font
+  // size, from the standard Adobe metrics of the built-in PDF fonts.
+  const W_HELV = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const W_HELV_B = [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const W_TIMES_B = [250,333,555,500,500,1000,833,278,333,333,500,570,250,333,250,278,500,500,500,500,500,500,500,500,500,500,333,333,570,570,570,500,930,722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,333,278,333,581,500,333,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,394,220,394,520];
+
+  const FONTS = {
+    'helvetica-normal': { base:'Helvetica',         ref:'F1', w:W_HELV,    dflt:556 },
+    'helvetica-bold':   { base:'Helvetica-Bold',    ref:'F2', w:W_HELV_B,  dflt:556 },
+    'helvetica-italic': { base:'Helvetica-Oblique', ref:'F3', w:W_HELV,    dflt:556 },
+    'times-bold':       { base:'Times-Bold',        ref:'F4', w:W_TIMES_B, dflt:500 },
+  };
+
+  // Characters outside plain ASCII that the standard fonts can show
+  // (WinAnsi encoding). Anything else is printed as "?".
+  const WIN = { 0x20AC:0x80, 0x2026:0x85, 0x2018:0x91, 0x2019:0x92, 0x201C:0x93, 0x201D:0x94, 0x2022:0x95, 0x2013:0x96, 0x2014:0x97 };
+  const WIN_WIDTHS = { 0x85:1000, 0x91:278, 0x92:278, 0x93:500, 0x94:500, 0x95:350, 0x96:556, 0x97:1000 };
+
+  function codes(str){
+    const out = [];
+    for(const ch of String(str)){
+      const c = ch.codePointAt(0);
+      if(c === 9 || c === 10 || c === 13) out.push(32);
+      else if(c >= 32 && c < 127) out.push(c);
+      else if(c >= 0xA0 && c <= 0xFF) out.push(c);
+      else if(WIN[c]) out.push(WIN[c]);
+      else out.push(63);
+    }
+    return out;
+  }
+
+  function pdfString(str){
+    return codes(str).map(c=>{
+      if(c === 40 || c === 41 || c === 92) return '\\' + String.fromCharCode(c);
+      if(c > 126) return '\\' + c.toString(8).padStart(3, '0');
+      return String.fromCharCode(c);
+    }).join('');
+  }
+
+  const num = v => { const r = Math.round(v * 100) / 100; return Object.is(r, -0) ? '0' : String(r); };
+  const rgb = c => c.map(v => num(v / 255)).join(' ');
+
+  function jpegInfo(bytes){
+    if(bytes[0] !== 0xFF || bytes[1] !== 0xD8) throw new Error('Image is not a JPEG');
+    let i = 2;
+    while(i + 9 < bytes.length){
+      if(bytes[i] !== 0xFF){ i++; continue; }
+      const m = bytes[i + 1];
+      if(m === 0xFF){ i++; continue; }
+      if(m === 0xD8 || m === 0x01 || (m >= 0xD0 && m <= 0xD7)){ i += 2; continue; }
+      const len = (bytes[i + 2] << 8) | bytes[i + 3];
+      const isSOF = (m >= 0xC0 && m <= 0xCF) && m !== 0xC4 && m !== 0xC8 && m !== 0xCC;
+      if(isSOF){
+        return { height:(bytes[i + 5] << 8) | bytes[i + 6], width:(bytes[i + 7] << 8) | bytes[i + 8], comps:bytes[i + 9] };
+      }
+      i += 2 + len;
+    }
+    throw new Error('JPEG size not found');
+  }
+
+  function dataUrlBytes(dataUrl){
+    const b64 = String(dataUrl).split(',')[1] || '';
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  class MiniPDF {
+    constructor(){
+      this.pages = []; this.log = []; this.images = []; this.imageCache = {}; this.fontsUsed = {};
+      this.fill = [0,0,0]; this.stroke = [0,0,0]; this.textColor = [0,0,0];
+      this.lineW = 1; this.fontKey = 'helvetica-normal'; this.fontSize = 12; this.title = '';
+      this.addPage();
+      MiniPDF.last = this;
+    }
+    get internal(){
+      const self = this;
+      return { pageSize:{ getWidth:()=>PAGE_W, getHeight:()=>PAGE_H }, getNumberOfPages:()=>self.pages.length };
+    }
+    addPage(){ this.pages.push([]); this.log.push([]); this.cur = this.pages.length - 1; return this; }
+    setPage(n){ this.cur = Math.min(Math.max(1, n), this.pages.length) - 1; return this; }
+    out(s){ this.pages[this.cur].push(s); }
+    setFillColor(r, g, b){ this.fill = [r, g, b]; }
+    setDrawColor(r, g, b){ this.stroke = [r, g, b]; }
+    setTextColor(r, g, b){ this.textColor = [r, g, b]; }
+    setLineWidth(w){ this.lineW = w; }
+    setFont(family, style){
+      const key = String(family || 'helvetica').toLowerCase() + '-' + (style || 'normal');
+      this.fontKey = FONTS[key] ? key : 'helvetica-normal';
+    }
+    setFontSize(n){ this.fontSize = n; }
+    setTitle(t){ this.title = String(t || ''); }
+
+    paint(style){
+      const s = String(style || 'S').toUpperCase();
+      const fill = s.includes('F'), stroke = s.includes('D') || s === 'S';
+      const pre = (fill ? `${rgb(this.fill)} rg ` : '') + (stroke ? `${rgb(this.stroke)} RG ${num(this.lineW)} w ` : '');
+      return { pre, op: fill && stroke ? 'B' : (fill ? 'f' : 'S') };
+    }
+    rect(x, y, w, h, style){
+      const p = this.paint(style);
+      this.log[this.cur].push({ rect:true, x, y, w, h, style });
+      this.out(`${p.pre}${num(x)} ${num(PAGE_H - y - h)} ${num(w)} ${num(h)} re ${p.op}`);
+    }
+    line(x1, y1, x2, y2){
+      this.out(`${rgb(this.stroke)} RG ${num(this.lineW)} w ${num(x1)} ${num(PAGE_H - y1)} m ${num(x2)} ${num(PAGE_H - y2)} l S`);
+    }
+    roundedRect(x, y, w, h, rx, ry, style){
+      const p = this.paint(style);
+      const r = Math.max(0, Math.min(rx, w / 2, h / 2)), k = 0.5523 * r;
+      const L = x, R = x + w, B = PAGE_H - y - h, T = PAGE_H - y;
+      const pts = [
+        `${num(L + r)} ${num(B)} m`, `${num(R - r)} ${num(B)} l`,
+        `${num(R - r + k)} ${num(B)} ${num(R)} ${num(B + r - k)} ${num(R)} ${num(B + r)} c`,
+        `${num(R)} ${num(T - r)} l`,
+        `${num(R)} ${num(T - r + k)} ${num(R - r + k)} ${num(T)} ${num(R - r)} ${num(T)} c`,
+        `${num(L + r)} ${num(T)} l`,
+        `${num(L + r - k)} ${num(T)} ${num(L)} ${num(T - r + k)} ${num(L)} ${num(T - r)} c`,
+        `${num(L)} ${num(B + r)} l`,
+        `${num(L)} ${num(B + r - k)} ${num(L + r - k)} ${num(B)} ${num(L + r)} ${num(B)} c`,
+      ];
+      this.out(`${p.pre}${pts.join(' ')} h ${p.op}`);
+    }
+    getTextWidth(str){
+      const f = FONTS[this.fontKey];
+      let units = 0;
+      codes(str).forEach(c=>{ units += (c >= 32 && c < 127) ? f.w[c - 32] : (WIN_WIDTHS[c] || f.dflt); });
+      return units * this.fontSize / 1000;
+    }
+    splitTextToSize(text, maxWidth){
+      const lines = [];
+      String(text).split('\n').forEach(para=>{
+        let line = '';
+        para.split(' ').forEach(word=>{
+          const candidate = line ? line + ' ' + word : word;
+          if(this.getTextWidth(candidate) <= maxWidth || !line){
+            line = candidate;
+          } else {
+            lines.push(line);
+            line = word;
+          }
+          // A single word wider than the space available is broken by characters.
+          while(this.getTextWidth(line) > maxWidth && line.length > 1){
+            let cut = line.length - 1;
+            while(cut > 1 && this.getTextWidth(line.slice(0, cut)) > maxWidth) cut--;
+            lines.push(line.slice(0, cut));
+            line = line.slice(cut);
+          }
+        });
+        lines.push(line);
+      });
+      return lines;
+    }
+    text(str, x, y, opts){
+      const s = String(str);
+      const align = opts && opts.align;
+      let tx = x;
+      if(align === 'right') tx = x - this.getTextWidth(s);
+      else if(align === 'center') tx = x - this.getTextWidth(s) / 2;
+      const f = FONTS[this.fontKey];
+      this.fontsUsed[this.fontKey] = true;
+      this.log[this.cur].push({ t:s, x, y, size:this.fontSize, align, font:this.fontKey });
+      this.out(`BT /${f.ref} ${num(this.fontSize)} Tf ${rgb(this.textColor)} rg ${num(tx)} ${num(PAGE_H - y)} Td (${pdfString(s)}) Tj ET`);
+    }
+    addImage(dataUrl, format, x, y, w, h){
+      let img = this.imageCache[dataUrl];
+      if(!img){
+        const bytes = dataUrlBytes(dataUrl);
+        const info = jpegInfo(bytes);
+        img = { bytes, width:info.width, height:info.height,
+          cs: info.comps === 1 ? 'DeviceGray' : (info.comps === 4 ? 'DeviceCMYK' : 'DeviceRGB'),
+          ref: 'Im' + (this.images.length + 1) };
+        this.images.push(img);
+        this.imageCache[dataUrl] = img;
+      }
+      this.log[this.cur].push({ img:true, fmt:'JPEG', x, y, w, h });
+      this.out(`q ${num(w)} 0 0 ${num(h)} ${num(x)} ${num(PAGE_H - y - h)} cm /${img.ref} Do Q`);
+    }
+
+    bytes(){
+      const chunks = []; let length = 0; const offsets = [];
+      const push = part=>{
+        let b = part;
+        if(typeof part === 'string'){ b = new Uint8Array(part.length); for(let i = 0; i < part.length; i++) b[i] = part.charCodeAt(i) & 0xFF; }
+        chunks.push(b); length += b.length;
+      };
+      let next = 1;
+      const catalogId = next++, pagesId = next++, infoId = next++;
+      const fontKeys = Object.keys(this.fontsUsed);
+      const fontIds = {}; fontKeys.forEach(k=>{ fontIds[k] = next++; });
+      this.images.forEach(img=>{ img.id = next++; });
+      const pageIds = this.pages.map(()=>({ page:next++, content:next++ }));
+      const obj = (id, body)=>{
+        offsets[id] = length;
+        push(`${id} 0 obj\n`);
+        if(typeof body === 'function') body(); else push(body);
+        push('\nendobj\n');
+      };
+      push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+      obj(catalogId, `<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
+      obj(pagesId, `<< /Type /Pages /Kids [${pageIds.map(p=>p.page + ' 0 R').join(' ')}] /Count ${pageIds.length} >>`);
+      obj(infoId, `<< /Producer (Sea Service Log) /Title (${pdfString(this.title || 'Sea Service Log')}) >>`);
+      fontKeys.forEach(k=> obj(fontIds[k], `<< /Type /Font /Subtype /Type1 /BaseFont /${FONTS[k].base} /Encoding /WinAnsiEncoding >>`));
+      this.images.forEach(img=> obj(img.id, ()=>{
+        push(`<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /${img.cs} /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.bytes.length} >>\nstream\n`);
+        push(img.bytes);
+        push('\nendstream');
+      }));
+      const fontRes = fontKeys.map(k=>`/${FONTS[k].ref} ${fontIds[k]} 0 R`).join(' ');
+      const imgRes = this.images.map(img=>`/${img.ref} ${img.id} 0 R`).join(' ');
+      this.pages.forEach((ops, i)=>{
+        const content = ops.join('\n');
+        obj(pageIds[i].page, `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << ${fontRes} >> /XObject << ${imgRes} >> >> /Contents ${pageIds[i].content} 0 R >>`);
+        obj(pageIds[i].content, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+      });
+      const xrefAt = length;
+      let xref = `xref\n0 ${next}\n0000000000 65535 f \n`;
+      for(let id = 1; id < next; id++) xref += String(offsets[id]).padStart(10, '0') + ' 00000 n \n';
+      push(xref);
+      push(`trailer\n<< /Size ${next} /Root ${catalogId} 0 R /Info ${infoId} 0 R >>\nstartxref\n${xrefAt}\n%%EOF\n`);
+      const out = new Uint8Array(length);
+      let pos = 0;
+      chunks.forEach(c=>{ out.set(c, pos); pos += c.length; });
+      return out;
+    }
+    output(type){
+      const b = this.bytes();
+      if(type === 'arraybuffer') return b.buffer;
+      return new Blob([b], { type:'application/pdf' });
+    }
+  }
+  return MiniPDF;
+})();
+// ==MINIPDF-END==
+</script>
+<script>
+(function(){
+  const TYPES = [
+    { id:'general', name:'On Board Service', color:'var(--general)', letter:'B' },
+    { id:'sea', name:'Sea Service', color:'var(--sea)', letter:'S' },
+    { id:'watch', name:'Navigational Watchkeeping', color:'var(--gold)', letter:'W' },
+    { id:'standby', name:'Standby Service', color:'var(--standby)', letter:'T' },
+    { id:'yard', name:'Yard Service', color:'var(--yard)', letter:'Y' },
+    { id:'disembarked', name:'Disembarked', color:'var(--disembarked)', letter:'D' },
+  ];
+
+  let entries = {};        // { "YYYY-MM-DD": { types: ['sea','watch'] } }
+  let viewDate = new Date();
+  let selectedDateStr = null;
+  let pendingTypes = new Set();
+
+  // Historical totals imported from the user's PYA service record (page 1),
+  // cross-checked against the sum of every logged sea-service entry in the document.
+  // "onboard" is the master figure: every logged day counts toward it automatically,
+  // except days marked purely as Disembarked.
+  // ==IMPORT-START==
+  // Blank starting template: no service record or personal details. A crew
+  // member enters their own totals (Totals -> Settings -> Edit) and profile.
+  // No version tags, so anything a crew member enters is never overwritten.
+  const IMPORTED_BASELINE_VERSION = null;
+  const IMPORTED_BASELINE = { onboard: 0, sea: 0, yard: 0, standby: 0, watch: 0, disembarked: 0 };
+  const IMPORTED_RECORD_RANGES = [];
+  const PROFILE_SEED_VERSION = null;
+  const SEED_PROFILE = null;
+  const IMPORTED_RECORD_NAME = null;
+  // ==IMPORT-END==
+  let baseline = { ...IMPORTED_BASELINE };
+
+  const pad = n => String(n).padStart(2,'0');
+  const toKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const STORAGE_KEY = 'vessel-log-entries';
+  const BASELINE_KEY = 'vessel-log-baseline';
+  const SIGNATURE_KEY = 'vessel-log-signature';
+  const TITLE_KEY = 'vessel-log-title';
+  const AVATAR_KEY = 'vessel-log-avatar';
+  const PROFILE_KEY = 'vessel-log-profile';
+
+  const DEFAULT_PROFILE = { name:'', surname:'', nationality:'', coc:'', vesselName:'', vesselGT:'', vesselLength:'', rank:'' };
+  const DEFAULT_TITLE = 'Sea Service Log';
+  let profile = { ...DEFAULT_PROFILE };
+
+  let signature = null; // { image: 'data:image/png;base64,...', width, height, pin: '1234' }
+  let avatar = null; // { dataUrl, width, height }
+
+  // ==STORAGE-START==
+  // ---------- Storage ----------
+  // ONE local store is chosen at startup and used for every read and write
+  // for the rest of the session. (An earlier version switched stores
+  // mid-session whenever a key didn't exist yet, which split data across two
+  // places and made new entries "disappear" on the next launch.)
+  //
+  // When this page runs from its hosted claude.ai link, every save is ALSO
+  // mirrored to a private per-user cloud store, so the log survives iOS
+  // clearing the phone's browser storage. Each save is timestamped so the
+  // newest copy always wins when the device and the cloud are reconciled.
+  const LAST_BACKUP_KEY = 'vessel-log-last-backup';
+  const META_KEY = 'vessel-log-sync-meta';
+  const RECOVERED_KEY = 'vessel-log-recovered-v2';
+  const DATA_KEYS = [STORAGE_KEY, BASELINE_KEY, SIGNATURE_KEY, TITLE_KEY, AVATAR_KEY, PROFILE_KEY];
+  const SYNC_KEYS = DATA_KEYS.concat(['vessel-log-a2hs-dismissed']);
+  const CLOUD_MAX_CHARS = 240000; // stays under the cloud store's 256 KiB per-document limit
+
+  const hasClaudeStorageApi = !!(window.storage
+    && typeof window.storage.get === 'function'
+    && typeof window.storage.set === 'function');
+
+  let backendPromise = null;
+  let backend = null; // 'claude' | 'local' | 'memory'
+  const memoryStore = {};
+
+  function localStorageWorks(){
+    try{
+      const k = 'ssl-probe';
+      localStorage.setItem(k, '1');
+      const ok = localStorage.getItem(k) === '1';
+      localStorage.removeItem(k);
+      return ok;
+    }catch(e){ return false; }
+  }
+
+  function chooseBackend(){
+    if(!backendPromise){
+      backendPromise = (async ()=>{
+        if(hasClaudeStorageApi){
+          try{
+            await window.storage.set('ssl-probe', '1', false);
+            const r = await window.storage.get('ssl-probe', false);
+            if(r && r.value === '1'){
+              backend = 'claude';
+              await recoverStrandedLocalData();
+              return backend;
+            }
+          }catch(e){ /* Claude storage isn't usable for this file */ }
+        }
+        backend = localStorageWorks() ? 'local' : 'memory';
+        return backend;
+      })();
+    }
+    return backendPromise;
+  }
+
+  async function rawGet(key){
+    const b = await chooseBackend();
+    if(b === 'claude'){
+      // Reading a key that doesn't exist yet throws here. That means
+      // "no value saved yet" — NOT "storage broken" — so it must never
+      // cause a switch to a different store.
+      try{ const r = await window.storage.get(key, false); return r ? r.value : null; }
+      catch(e){ return null; }
+    }
+    if(b === 'local'){
+      try{ return localStorage.getItem(key); }catch(e){ return null; }
+    }
+    return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null;
+  }
+
+  async function rawSet(key, value){
+    const b = await chooseBackend();
+    if(b === 'claude'){
+      try{ await window.storage.set(key, value, false); return true; }
+      catch(e){ console.error('Save failed', e); return false; }
+    }
+    if(b === 'local'){
+      try{ localStorage.setItem(key, value); return true; }
+      catch(e){ console.error('Device storage save failed', e); return false; }
+    }
+    memoryStore[key] = value;
+    return true;
+  }
+
+  // One-time rescue for data stranded by the old store-switching bug: if
+  // Claude storage is the chosen store but the browser's own storage also
+  // holds data, bring it across (calendar days are merged, never dropped).
+  async function recoverStrandedLocalData(){
+    try{
+      const done = await window.storage.get(RECOVERED_KEY, false).catch(()=>null);
+      if(done && done.value === '1') return;
+      for(const key of DATA_KEYS){
+        let localVal = null;
+        try{ localVal = localStorage.getItem(key); }catch(e){ localVal = null; }
+        if(localVal === null) continue;
+        const r = await window.storage.get(key, false).catch(()=>null);
+        const claudeVal = r ? r.value : null;
+        if(key === STORAGE_KEY && claudeVal){
+          const merged = mergeEntryMaps(safeParse(claudeVal, {}), safeParse(localVal, {}));
+          await window.storage.set(key, JSON.stringify(merged), false);
+        } else {
+          // Anything saved after the old bug kicked in went to the browser's
+          // storage, so that copy is the more recent one.
+          await window.storage.set(key, localVal, false);
+        }
+      }
+      await window.storage.set(RECOVERED_KEY, '1', false);
+    }catch(e){ console.warn('Recovery of older saved data skipped', e); }
+  }
+
+  function safeParse(text, fallback){
+    try{ const v = JSON.parse(text); return v === null || v === undefined ? fallback : v; }
+    catch(e){ return fallback; }
+  }
+
+  function mergeEntryMaps(a, b){
+    const out = {};
+    [a, b].forEach(map=>{
+      Object.keys(map || {}).forEach(date=>{
+        const types = (map[date] && Array.isArray(map[date].types)) ? map[date].types : [];
+        if(!out[date]) out[date] = { types: [] };
+        types.forEach(t=>{ if(!out[date].types.includes(t)) out[date].types.push(t); });
+      });
+    });
+    return out;
+  }
+
+  let syncMeta = null; // { key: timestamp of the last local save }
+  async function getMeta(){
+    if(!syncMeta) syncMeta = safeParse(await rawGet(META_KEY), {});
+    return syncMeta;
+  }
+
+  async function storageGet(key){
+    return rawGet(key);
+  }
+
+  async function storageSet(key, value){
+    const ok = await rawSet(key, value);
+    if(ok && SYNC_KEYS.includes(key)){
+      const meta = await getMeta();
+      meta[key] = Date.now();
+      await rawSet(META_KEY, JSON.stringify(meta));
+      cloudPush(key, value, meta[key]);
+    }
+    return ok;
+  }
+
+  // ---------- Cloud sync (hosted link only) ----------
+  let cloud = null;          // { db, uid } once connected
+  let cloudState = 'off';    // 'off' | 'connecting' | 'on' | 'error'
+  let cloudSyncRunning = false;
+  const cloudChains = {};
+  const cloudTooLarge = new Set();
+  let initialLoadPromise = Promise.resolve();
+
+  function cloudDoc(key){ return cloud.db.doc('data/users/' + cloud.uid + '/' + key); }
+
+  function cloudPush(key, value, ts){
+    if(!cloud) return;
+    if(value.length > CLOUD_MAX_CHARS){ cloudTooLarge.add(key); renderStorageStatus(); return; }
+    cloudTooLarge.delete(key);
+    // One write at a time per document, in the order they were made.
+    cloudChains[key] = (cloudChains[key] || Promise.resolve()).then(async ()=>{
+      for(let attempt = 0; attempt < 2; attempt++){
+        try{
+          await cloudDoc(key).set({ value, updatedAt: ts });
+          if(cloudState !== 'on'){ cloudState = 'on'; renderStorageStatus(); }
+          return;
+        }catch(e){
+          if(e && e.code === 'unavailable' && attempt === 0){
+            await new Promise(r=>setTimeout(r, 400 + Math.random() * 600));
+            continue;
+          }
+          console.error('Cloud save failed', e);
+          cloudState = 'error';
+          renderStorageStatus();
+          return;
+        }
+      }
+    });
+  }
+
+  async function syncWithCloud(){
+    if(!cloud || cloudSyncRunning) return;
+    cloudSyncRunning = true;
+    try{
+      await initialLoadPromise;
+      const meta = await getMeta();
+      let pulledAny = false;
+      for(const key of SYNC_KEYS){
+        const snap = await cloudDoc(key).get();
+        const remote = snap.exists ? snap.data() : null;
+        const localVal = await rawGet(key);
+        const localTs = meta[key] || 0;
+        const remoteTs = (remote && remote.updatedAt) || 0;
+        if(remote && typeof remote.value === 'string' && (localVal === null || remoteTs >= localTs)){
+          if(remote.value !== localVal){ await rawSet(key, remote.value); pulledAny = true; }
+          meta[key] = remoteTs;
+        } else if(localVal !== null){
+          const ts = localTs || Date.now();
+          meta[key] = ts;
+          cloudPush(key, localVal, ts);
+        }
+      }
+      await rawSet(META_KEY, JSON.stringify(meta));
+      cloudState = 'on';
+      if(pulledAny) await loadEntries();
+    }catch(e){
+      console.error('Cloud sync failed', e);
+      cloudState = 'error';
+    }finally{
+      cloudSyncRunning = false;
+      renderStorageStatus();
+    }
+  }
+
+  async function connectCloud(){
+    if(!window.claude || typeof window.claude.use !== 'function') return;
+    let db = null, user = null;
+    try{
+      [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    }catch(e){ return; }
+    if(!db || !user) return;
+    let uid = null;
+    try{ uid = await user.id(); }catch(e){ uid = null; }
+    if(!uid) return;
+    cloud = { db, uid };
+    cloudState = 'connecting';
+    renderStorageStatus();
+    await syncWithCloud();
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState === 'visible') syncWithCloud();
+    });
+  }
+
+  // Ask the browser to treat this app's storage as persistent, so it is not
+  // cleared automatically to free up space.
+  let persistState = 'unknown';
+  (async ()=>{
+    try{
+      if(navigator.storage && typeof navigator.storage.persist === 'function'){
+        const already = await navigator.storage.persisted();
+        const granted = already || await navigator.storage.persist();
+        persistState = granted ? 'granted' : 'not granted';
+        renderStorageStatus();
+      }
+    }catch(e){ /* not supported here */ }
+  })();
+
+  // Saving a file: the hosted page must hand files to the viewer through the
+  // downloads capability; a loose HTML file uses a normal download link.
+  const downloadsPromise = (window.claude && typeof window.claude.use === 'function')
+    ? Promise.resolve(window.claude.use('downloads')).catch(()=>null)
+    : Promise.resolve(null);
+
+  async function saveFile(filename, blob){
+    const downloads = await Promise.race([
+      downloadsPromise,
+      new Promise(r=>setTimeout(()=>r(null), 1500)),
+    ]);
+    if(downloads){
+      try{ await downloads.save({ filename, data: blob }); return true; }
+      catch(e){ console.warn('File save was declined or failed', e); return false; }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    return true;
+  }
+  // ==STORAGE-END==
+
+  // One-time cleanup: earlier versions of this app briefly had 'onboard' as a
+  // manually selectable tag. Any day still carrying that id from back then
+  // would otherwise be miscounted (it shares its name with the derived
+  // Onboard Service total). This strips unrecognized ids and removes any
+  // entry that's left empty as a result.
+  function sanitizeEntries(){
+    let changed = false;
+    Object.keys(entries).forEach(key=>{
+      const original = entries[key].types || [];
+      const cleaned = original.filter(id => TYPES.some(t => t.id === id));
+      if(cleaned.length !== original.length){
+        changed = true;
+        if(cleaned.length){
+          entries[key] = { types: cleaned };
+        } else {
+          delete entries[key];
+        }
+      }
+    });
+    return changed;
+  }
+
+  async function loadEntries(){
+    // Start from a clean slate every time, so re-running this after a cloud
+    // sync or a restore never leaves stale values from the previous state.
+    entries = {};
+    baseline = { ...IMPORTED_BASELINE };
+    signature = null;
+    avatar = null;
+    profile = { ...DEFAULT_PROFILE };
+    document.getElementById('appTitle').textContent = DEFAULT_TITLE;
+    document.title = DEFAULT_TITLE;
+    renderAvatar();
+
+    const rawEntries = await storageGet(STORAGE_KEY);
+    if(rawEntries){
+      entries = safeParse(rawEntries, {});
+    }
+    if(sanitizeEntries()){
+      await saveEntries();
+    }
+
+    const rawBaseline = await storageGet(BASELINE_KEY);
+    if(rawBaseline){
+      baseline = safeParse(rawBaseline, { ...IMPORTED_BASELINE });
+    } else {
+      // First run on this device: store the default baseline. Saved without
+      // an edit timestamp on purpose, so it can never overwrite a baseline
+      // the user already edited and synced from another device.
+      await rawSet(BASELINE_KEY, JSON.stringify(baseline));
+    }
+    // A newer service record has been imported into the app: update the
+    // stored totals to it once. Manual edits made afterwards keep this
+    // version tag, so they are never overwritten by this step again.
+    if(IMPORTED_BASELINE_VERSION && baseline.importVersion !== IMPORTED_BASELINE_VERSION){
+      baseline = { ...IMPORTED_BASELINE };
+      await saveBaseline();
+    }
+
+    const rawSignature = await storageGet(SIGNATURE_KEY);
+    if(rawSignature){
+      signature = safeParse(rawSignature, null);
+    }
+
+    const rawTitle = await storageGet(TITLE_KEY);
+    if(rawTitle){
+      document.getElementById('appTitle').textContent = rawTitle;
+      document.title = rawTitle;
+    }
+
+    const rawAvatar = await storageGet(AVATAR_KEY);
+    if(rawAvatar){
+      try{
+        avatar = JSON.parse(rawAvatar);
+      }catch(e){
+        // Backward compatibility: an earlier version saved this as a raw data URL string.
+        if(rawAvatar.startsWith('data:image')){
+          avatar = { dataUrl: rawAvatar, width: null, height: null };
+        } else {
+          avatar = null;
+        }
+      }
+      if(avatar && avatar.dataUrl){
+        renderAvatar();
+      }
+    }
+
+    const rawProfile = await storageGet(PROFILE_KEY);
+    if(rawProfile){
+      profile = { ...DEFAULT_PROFILE, ...safeParse(rawProfile, {}) };
+    }
+    // Profile details supplied for this copy: load them once. Later edits
+    // keep the version tag, so this step never overwrites them.
+    if(PROFILE_SEED_VERSION && profile.seedVersion !== PROFILE_SEED_VERSION){
+      profile = { ...DEFAULT_PROFILE, ...SEED_PROFILE, seedVersion: PROFILE_SEED_VERSION };
+      if(rawProfile){
+        await saveProfile(); // replaces an older saved profile, and syncs it
+      } else {
+        // Nothing saved yet on this phone: store without an edit timestamp,
+        // so a newer profile already in the cloud always takes priority.
+        await rawSet(PROFILE_KEY, JSON.stringify(profile));
+      }
+    }
+
+    lastBackupMs = Number(await rawGet(LAST_BACKUP_KEY)) || null;
+
+    renderCalendar();
+    renderTotals();
+    renderSignatureStatus();
+    renderProfile();
+    renderStorageStatus();
+  }
+
+  async function saveEntries(){
+    const ok = await storageSet(STORAGE_KEY, JSON.stringify(entries));
+    if(!ok) showToast('Couldn’t save that entry on this phone. Your other entries are safe — try again, and download a backup from Crew Profile.');
+  }
+
+  async function saveBaseline(){
+    const ok = await storageSet(BASELINE_KEY, JSON.stringify(baseline));
+    if(!ok) showToast('Couldn’t save on this phone. Try again, and download a backup from Crew Profile.');
+  }
+
+  async function saveProfile(){
+    const ok = await storageSet(PROFILE_KEY, JSON.stringify(profile));
+    if(!ok) showToast('Couldn’t save your profile on this phone. Try again.');
+    return ok;
+  }
+
+  async function saveSignature(){
+    const ok = await storageSet(SIGNATURE_KEY, JSON.stringify(signature));
+    if(!ok) showToast('Couldn’t save your signature on this phone. Try again.');
+    return ok;
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+      if(tab.dataset.tab === 'totals') renderTotals();
+      if(tab.dataset.tab === 'profile') renderProfile();
+    });
+  });
+
+  // ---------- Calendar rendering ----------
+  function renderCalendar(){
+    const y = viewDate.getFullYear(), m = viewDate.getMonth();
+    document.getElementById('monthLabel').textContent = `${MONTHS[m]} ${y}`;
+
+    const firstDay = new Date(y, m, 1);
+    const startWeekday = weekStartsMonday ? (firstDay.getDay() + 6) % 7 : firstDay.getDay();
+    document.getElementById('jumpMonth').value = `${y}-${pad(m + 1)}`;
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    for(let i=0;i<startWeekday;i++){
+      const pad_ = document.createElement('div');
+      pad_.className = 'day pad';
+      grid.appendChild(pad_);
+    }
+
+    const todayKey = toKey(new Date());
+
+    for(let d=1; d<=daysInMonth; d++){
+      const dateObj = new Date(y, m, d);
+      const key = toKey(dateObj);
+      const cell = document.createElement('div');
+      cell.className = 'day';
+      if(key === todayKey) cell.classList.add('today');
+
+      const entry = entries[key];
+      if(entry && entry.types && entry.types.length){
+        cell.classList.add('logged');
+      }
+
+      const num = document.createElement('span');
+      num.textContent = d;
+      cell.appendChild(num);
+
+      if(entry && entry.types && entry.types.length){
+        const dots = document.createElement('div');
+        dots.className = 'dots';
+        entry.types.forEach(typeId=>{
+          const typeInfo = TYPES.find(t=>t.id===typeId);
+          if(!typeInfo) return;
+          const dot = document.createElement('div');
+          dot.className = 'tag-dot';
+          dot.style.background = typeInfo.color;
+          dot.textContent = typeInfo.letter;
+          dots.appendChild(dot);
+        });
+        cell.appendChild(dots);
+      }
+
+      cell.addEventListener('click', ()=> openSheet(key));
+      grid.appendChild(cell);
+    }
+    renderMonthSummary(y, m, daysInMonth);
+  }
+
+  // Summary of the month on screen, so progress is visible without switching tabs.
+  function renderMonthSummary(y, m, daysInMonth){
+    const el = document.getElementById('monthSummary');
+    if(!el) return;
+    const prefix = `${y}-${pad(m + 1)}-`;
+    const counts = { onboard:0, general:0, sea:0, watch:0, standby:0, yard:0, disembarked:0 };
+    let logged = 0;
+    Object.keys(entries).forEach(k=>{
+      if(!k.startsWith(prefix)) return;
+      const types = (entries[k].types || []).filter(id => TYPES.some(t => t.id === id));
+      if(!types.length) return;
+      logged++;
+      types.forEach(id => counts[id]++);
+      if(types.some(id => id !== 'disembarked')) counts.onboard++;
+    });
+    if(!logged){
+      el.innerHTML = `<div class="ms-title">${MONTHS[m]} ${y}</div><div class="ms-empty">Nothing logged this month yet — tap a day to start.</div>`;
+      return;
+    }
+    const chips = TYPES.filter(t => counts[t.id] > 0).map(t =>
+      `<span class="since-chip" title="${t.name}"><span class="b" style="background:${t.color}">${t.letter}</span>${counts[t.id]}</span>`
+    ).join('');
+    el.innerHTML = `<div class="ms-top"><div class="ms-title">${MONTHS[m]}: ${counts.onboard} day${counts.onboard === 1 ? '' : 's'} on board</div>`
+      + `<div class="ms-count">${logged} of ${daysInMonth} logged</div></div><div class="ms-chips">${chips}</div>`;
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', ()=>{
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1);
+    renderCalendar();
+  });
+  document.getElementById('nextMonth').addEventListener('click', ()=>{
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1);
+    renderCalendar();
+  });
+  // Jump straight to any month (the month name opens the phone's month picker).
+  const jumpMonth = document.getElementById('jumpMonth');
+  ['change', 'input'].forEach(ev => jumpMonth.addEventListener(ev, ()=>{
+    if(!/^\d{4}-\d{2}$/.test(jumpMonth.value)) return;
+    const [jy, jm] = jumpMonth.value.split('-').map(Number);
+    if(jy === viewDate.getFullYear() && jm - 1 === viewDate.getMonth()) return;
+    viewDate = new Date(jy, jm - 1, 1);
+    renderCalendar();
+  }));
+
+  // Week starts on Sunday (default) or Monday — a preference kept on this phone.
+  const WEEK_START_KEY = 'vessel-log-week-start';
+  let weekStartsMonday = false;
+  function renderWeekdays(){
+    const letters = weekStartsMonday ? ['M','T','W','T','F','S','S'] : ['S','M','T','W','T','F','S'];
+    document.getElementById('weekdayRow').innerHTML = letters.map(l => `<span>${l}</span>`).join('');
+    document.querySelectorAll('.week-tab').forEach(t => t.classList.toggle('active', (t.dataset.week === 'monday') === weekStartsMonday));
+  }
+  document.querySelectorAll('.week-tab').forEach(t => t.addEventListener('click', async ()=>{
+    weekStartsMonday = t.dataset.week === 'monday';
+    renderWeekdays();
+    renderCalendar();
+    await storageSet(WEEK_START_KEY, weekStartsMonday ? 'monday' : 'sunday');
+  }));
+  (async function initWeekStart(){
+    weekStartsMonday = (await storageGet(WEEK_START_KEY)) === 'monday';
+    renderWeekdays();
+    renderCalendar();
+  })();
+
+  document.getElementById('todayBtn').addEventListener('click', ()=>{
+    viewDate = new Date();
+    renderCalendar();
+  });
+
+  // ---------- Sheet ----------
+  const overlay = document.getElementById('overlay');
+  const optionsList = document.getElementById('optionsList');
+  const dateRangePicker = document.getElementById('dateRangePicker');
+  const rangeFrom = document.getElementById('rangeFrom');
+  const rangeTo = document.getElementById('rangeTo');
+
+  function addTypeToEntry(key, typeId){
+    if(!entries[key]) entries[key] = { types: [] };
+    if(!entries[key].types.includes(typeId)) entries[key].types.push(typeId);
+  }
+
+  function applyTypesToRange(fromStr, toStr, typeIds){
+    let [fy,fm,fd] = fromStr.split('-').map(Number);
+    let [ty,tm,td] = toStr.split('-').map(Number);
+    let start = new Date(fy, fm-1, fd);
+    let end = new Date(ty, tm-1, td);
+    if(end < start){ const tmp = start; start = end; end = tmp; }
+
+    let cursor = start;
+    let guard = 0; // safety cap so a mistyped date can't loop forever
+    while(cursor <= end && guard < 3660){
+      const key = toKey(cursor);
+      typeIds.forEach(id => addTypeToEntry(key, id));
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()+1);
+      guard++;
+    }
+    return guard;
+  }
+
+  // ---------- Quick log ----------
+  // One tap logs the opened day (or the chosen date range) and closes the sheet.
+  const PRESETS = [
+    { label:'Sea day',     types:['sea','watch'] },
+    { label:'Standby',     types:['standby'] },
+    { label:'Yard',        types:['yard'] },
+    { label:'On board',    types:['general'] },
+    { label:'Disembarked', types:['disembarked'] },
+  ];
+
+  function formatChipDate(key){
+    const [y, m, d] = key.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  }
+
+  function sameTypes(a, b){
+    return a.length === b.length && a.every(t => b.includes(t));
+  }
+
+  // The nearest earlier day (within a month) that has something logged.
+  function findPreviousLogged(key){
+    const [y, m, d] = key.split('-').map(Number);
+    for(let i = 1; i <= 31; i++){
+      const k = toKey(new Date(y, m - 1, d - i));
+      if(entries[k] && entries[k].types && entries[k].types.length) return { key:k, types:entries[k].types.slice() };
+    }
+    return null;
+  }
+
+  function presetChip(label, types, extraClass){
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'preset-chip' + (extraClass ? ' ' + extraClass : '');
+    if(sameTypes(types, Array.from(pendingTypes))) chip.classList.add('active');
+    const badges = types.map(id=>{
+      const t = TYPES.find(x => x.id === id);
+      return t ? `<span style="background:${t.color}">${t.letter}</span>` : '';
+    }).join('');
+    chip.innerHTML = `<span class="mini">${badges}</span>${label}`;
+    chip.addEventListener('click', ()=> applyPreset(types, label));
+    return chip;
+  }
+
+  function buildPresets(){
+    const row = document.getElementById('presetRow');
+    row.innerHTML = '';
+    if(!selectedDateStr) return;
+    PRESETS.forEach(p => row.appendChild(presetChip(p.label, p.types)));
+    const prev = findPreviousLogged(selectedDateStr);
+    if(prev) row.appendChild(presetChip(`Same as ${formatChipDate(prev.key)}`, prev.types, 'copy'));
+  }
+
+  async function applyPreset(types, label){
+    const dateLabel = formatChipDate(selectedDateStr);
+    const before = snapshotEntries();
+    pendingTypes = new Set(types);
+    const days = await commitSheet();
+    showUndoToast(days > 1 ? `${days} days logged — ${label}` : `${dateLabel} logged — ${label}`, before);
+  }
+
+  let rangeOpen = false; // opened with "Clear several days…" (no categories ticked)
+
+  function rangeBounds(){
+    const a = rangeFrom.value || selectedDateStr, b = rangeTo.value || selectedDateStr;
+    return a <= b ? [a, b] : [b, a];
+  }
+
+  function daysBetween(a, b){
+    const [ay, am, ad] = a.split('-').map(Number), [by, bm, bd] = b.split('-').map(Number);
+    return Math.round((new Date(by, bm - 1, bd) - new Date(ay, am - 1, ad)) / 86400000) + 1;
+  }
+
+  function updateClearLabel(){
+    const visible = dateRangePicker.style.display === 'block';
+    const n = visible ? daysBetween(...rangeBounds()) : 1;
+    document.getElementById('clearBtn').textContent = n > 1 ? `Clear ${n} days` : 'Clear day';
+  }
+
+  function updateDateRangeVisibility(){
+    const visible = pendingTypes.size > 0 || rangeOpen;
+    dateRangePicker.style.display = visible ? 'block' : 'none';
+    document.getElementById('clearRangeLink').style.display = visible ? 'none' : '';
+    document.getElementById('rangeTitle').textContent = pendingTypes.size > 0
+      ? 'Apply the ticked categories to a range of days? Pick any past or future dates.'
+      : 'Pick the days to clear, then tap the Clear button. You can undo straight after.';
+    updateClearLabel();
+  }
+
+  document.getElementById('clearRangeLink').addEventListener('click', ()=>{
+    rangeOpen = true;
+    updateDateRangeVisibility();
+  });
+  ['input', 'change'].forEach(ev=>{
+    rangeFrom.addEventListener(ev, updateClearLabel);
+    rangeTo.addEventListener(ev, updateClearLabel);
+  });
+
+  function buildOptions(){
+    optionsList.innerHTML = '';
+    TYPES.forEach(t=>{
+      const opt = document.createElement('div');
+      opt.className = 'option';
+      opt.innerHTML = `
+        <div class="checkbox ${pendingTypes.has(t.id) ? 'checked':''}"></div>
+        <span class="opt-badge" style="background:${t.color}">${t.letter}</span>
+        <span class="name">${t.name}</span>
+      `;
+      opt.addEventListener('click', ()=>{
+        if(pendingTypes.has(t.id)) pendingTypes.delete(t.id);
+        else pendingTypes.add(t.id);
+        buildOptions();
+        updateDateRangeVisibility();
+      });
+      optionsList.appendChild(opt);
+    });
+    buildPresets();
+    updateConflictWarning();
+  }
+
+  // Disembarked together with a service category is contradictory on most
+  // days — but right on a joining or leaving day, so this advises, not blocks.
+  function updateConflictWarning(){
+    const el = document.getElementById('conflictWarning');
+    const clash = pendingTypes.has('disembarked') && [...pendingTypes].some(id => id !== 'disembarked');
+    el.style.display = clash ? 'block' : 'none';
+    el.textContent = clash
+      ? '⚠ Disembarked is ticked together with service. That’s right for a joining or leaving day — the day still counts as on board. Otherwise, untick one.'
+      : '';
+  }
+
+  function openSheet(key){
+    selectedDateStr = key;
+    const existing = entries[key];
+    pendingTypes = new Set(existing && existing.types ? existing.types : []);
+
+    // Default the range pickers to this day each time the sheet opens,
+    // so a range picked for a previous day doesn't carry over.
+    rangeFrom.value = key;
+    rangeTo.value = key;
+    rangeOpen = false;
+
+    const [yy,mm,dd] = key.split('-').map(Number);
+    const dObj = new Date(yy, mm-1, dd);
+    document.getElementById('sheetDate').textContent =
+      dObj.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    buildOptions();
+    updateDateRangeVisibility();
+    overlay.classList.add('show');
+  }
+
+  function closeSheet(){
+    overlay.classList.remove('show');
+    selectedDateStr = null;
+  }
+
+  document.getElementById('cancelBtn').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeSheet(); });
+
+  // Saves the sheet and returns how many days were logged.
+  async function commitSheet(){
+    const typesArr = Array.from(pendingTypes);
+    let dayCount = 1;
+
+    // The day actually opened always gets exactly the ticked state
+    // (so unticking something here removes it from just this day).
+    if(typesArr.length){
+      entries[selectedDateStr] = { types: typesArr };
+    } else {
+      delete entries[selectedDateStr];
+    }
+
+    // Any other days in the picked range get the ticked categories
+    // added on top of whatever they already have.
+    if(typesArr.length){
+      const from = rangeFrom.value || selectedDateStr;
+      const to = rangeTo.value || selectedDateStr;
+      const lo = from < to ? from : to, hi = from < to ? to : from;
+      dayCount = applyTypesToRange(from, to, typesArr) + ((selectedDateStr < lo || selectedDateStr > hi) ? 1 : 0);
+    }
+
+    await saveEntries();
+    renderCalendar();
+    renderTotals();
+    closeSheet();
+    return dayCount;
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async ()=>{
+    const dateLabel = formatChipDate(selectedDateStr);
+    const before = snapshotEntries();
+    const ticked = pendingTypes.size > 0;
+    const days = await commitSheet();
+    showUndoToast(ticked ? (days > 1 ? `${days} days saved` : `${dateLabel} saved`) : `${dateLabel} cleared`, before);
+  });
+
+  // Clears the opened day — or every day in the chosen range — with Undo.
+  document.getElementById('clearBtn').addEventListener('click', async ()=>{
+    const before = snapshotEntries();
+    const rangeVisible = dateRangePicker.style.display === 'block';
+    const [lo, hi] = rangeVisible ? rangeBounds() : [selectedDateStr, selectedDateStr];
+    let removed = 0;
+    Object.keys(entries).forEach(k=>{ if(k >= lo && k <= hi){ delete entries[k]; removed++; } });
+    closeSheet();
+    if(!removed){ showToast('Nothing logged on those days — nothing to clear.'); return; }
+    await saveEntries();
+    renderCalendar();
+    renderTotals();
+    showUndoToast(lo === hi ? `${formatChipDate(lo)} cleared` : `${removed} day${removed === 1 ? '' : 's'} cleared`, before);
+  });
+
+  // ---------- Totals ----------
+  function renderTotals(){
+    let counts = { onboard:0, general:0, sea:0, yard:0, standby:0, watch:0, disembarked:0 };
+    Object.values(entries).forEach(e=>{
+      const types = e.types || [];
+      types.forEach(id=>{
+        if(TYPES.some(t => t.id === id)) counts[id]++;
+      });
+      // A day counts toward Onboard Service as long as it has at least one
+      // tag that isn't Disembarked. Days marked only Disembarked don't count.
+      const hasOnboardTag = types.some(id => id !== 'disembarked' && TYPES.some(t => t.id === id));
+      if(hasOnboardTag) counts.onboard++;
+    });
+
+    const totalOnboard = counts.onboard + baseline.onboard;
+    const totalSea = counts.sea + baseline.sea;
+    const totalYard = counts.yard + baseline.yard;
+    const totalStandby = counts.standby + baseline.standby;
+    const totalWatch = counts.watch + baseline.watch;
+    const totalDisembarked = counts.disembarked + baseline.disembarked;
+
+    document.getElementById('totalOnboard').innerHTML = `${totalOnboard}<span>days</span>`;
+    document.getElementById('totalSea').textContent = totalSea;
+    document.getElementById('totalWatch').textContent = totalWatch;
+    document.getElementById('totalStandby').textContent = totalStandby;
+    document.getElementById('totalYard').textContent = totalYard;
+    document.getElementById('totalDisembarked').textContent = totalDisembarked;
+
+    // What has been added on top of the imported record, so the big total
+    // reads plainly as: record + logged in this app.
+    document.getElementById('sinceTotal').textContent = `+${counts.onboard}`;
+    document.getElementById('sinceSub').textContent = baseline.onboard
+      ? `On top of your ${IMPORTED_RECORD_NAME || 'imported totals'}: ${baseline.onboard} + ${counts.onboard} = ${totalOnboard} days on board.`
+      : 'Every day on board you’ve logged so far.';
+    document.getElementById('sinceBreakdown').innerHTML = TYPES.map(t =>
+      `<span class="since-chip" title="${t.name}"><span class="b" style="background:${t.color}">${t.letter}</span>+${counts[t.id]}</span>`
+    ).join('');
+
+    renderBaselineList();
+    renderOverlapWarning();
+  }
+
+  // Days logged on the calendar inside a contract that is already counted in
+  // the imported service record would be counted twice — flag them.
+  function renderOverlapWarning(){
+    const el = document.getElementById('overlapWarning');
+    if(!el) return;
+    const hits = new Map();
+    let total = 0;
+    Object.keys(entries).forEach(date=>{
+      const types = (entries[date] && entries[date].types) || [];
+      if(!types.some(id => id !== 'disembarked')) return;
+      const range = IMPORTED_RECORD_RANGES.find(r => date >= r.from && date <= r.to);
+      if(range){
+        total++;
+        hits.set(range.label, (hits.get(range.label) || 0) + 1);
+      }
+    });
+    if(!total){ el.style.display = 'none'; return; }
+    const list = [...hits.entries()].map(([label, n]) => `${label} (${n} day${n === 1 ? '' : 's'})`).join('; ');
+    el.textContent = `⚠ ${total} calendar day${total === 1 ? ' is' : 's are'} already included in your PYA record totals, so ${total === 1 ? 'it is' : 'they are'} being counted twice: ${list}. Clear ${total === 1 ? 'that day' : 'those days'} on the calendar to correct your totals.`;
+    el.style.display = 'block';
+  }
+
+  function renderBaselineList(){
+    const rows = [
+      { label:'Onboard Service', value: baseline.onboard, color:'var(--onboard)' },
+      { label:'Sea Service', value: baseline.sea, color:'var(--sea)' },
+      { label:'Navigational Watchkeeping', value: baseline.watch, color:'var(--gold)' },
+      { label:'Standby Service', value: baseline.standby, color:'var(--standby)' },
+      { label:'Yard Service', value: baseline.yard, color:'var(--yard)' },
+      { label:'Days disembarked', value: baseline.disembarked, color:'var(--disembarked)' },
+    ];
+    document.getElementById('baselineList').innerHTML = rows.map(r => `
+      <div class="baseline-row">
+        <span><span class="dot" style="background:${r.color}"></span>${r.label}</span>
+        <span class="n">${r.value}</span>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Baseline edit sheet ----------
+  const baselineOverlay = document.getElementById('baselineOverlay');
+
+  document.getElementById('editBaselineBtn').addEventListener('click', ()=>{
+    document.getElementById('baseOnboard').value = baseline.onboard;
+    document.getElementById('baseSea').value = baseline.sea;
+    document.getElementById('baseYard').value = baseline.yard;
+    document.getElementById('baseStandby').value = baseline.standby;
+    document.getElementById('baseWatch').value = baseline.watch;
+    document.getElementById('baseDisembarked').value = baseline.disembarked;
+    baselineOverlay.classList.add('show');
+  });
+
+  document.getElementById('restoreImportedBtn').addEventListener('click', ()=>{
+    document.getElementById('baseOnboard').value = IMPORTED_BASELINE.onboard;
+    document.getElementById('baseSea').value = IMPORTED_BASELINE.sea;
+    document.getElementById('baseYard').value = IMPORTED_BASELINE.yard;
+    document.getElementById('baseStandby').value = IMPORTED_BASELINE.standby;
+    document.getElementById('baseWatch').value = IMPORTED_BASELINE.watch;
+    document.getElementById('baseDisembarked').value = IMPORTED_BASELINE.disembarked;
+    // Fields are only populated here — nothing is saved until Save is tapped,
+    // same as any other edit to these fields.
+  });
+
+  function closeBaselineSheet(){ baselineOverlay.classList.remove('show'); }
+  document.getElementById('baselineCancelBtn').addEventListener('click', closeBaselineSheet);
+  baselineOverlay.addEventListener('click', (e)=>{ if(e.target === baselineOverlay) closeBaselineSheet(); });
+
+  document.getElementById('baselineSaveBtn').addEventListener('click', async ()=>{
+    baseline = {
+      onboard: Math.max(0, parseInt(document.getElementById('baseOnboard').value) || 0),
+      sea: Math.max(0, parseInt(document.getElementById('baseSea').value) || 0),
+      yard: Math.max(0, parseInt(document.getElementById('baseYard').value) || 0),
+      standby: Math.max(0, parseInt(document.getElementById('baseStandby').value) || 0),
+      watch: Math.max(0, parseInt(document.getElementById('baseWatch').value) || 0),
+      disembarked: Math.max(0, parseInt(document.getElementById('baseDisembarked').value) || 0),
+      importVersion: IMPORTED_BASELINE_VERSION,
+    };
+    await saveBaseline();
+    renderTotals();
+    closeBaselineSheet();
+  });
+
+  // ---------- Undo ----------
+  // Every calendar change shows a message with an Undo button for a few
+  // seconds. Undo puts the calendar back exactly as it was before that change.
+  let undoToken = 0;
+  function snapshotEntries(){ return JSON.parse(JSON.stringify(entries)); }
+
+  function showUndoToast(msg, snapshot){
+    const t = document.getElementById('sslToast');
+    if(!t) return;
+    const token = ++undoToken;
+    t.innerHTML = '';
+    const label = document.createElement('span');
+    label.textContent = msg;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast-undo';
+    btn.textContent = 'Undo';
+    btn.addEventListener('click', async ()=>{
+      if(token !== undoToken) return; // only the most recent change can be undone
+      entries = snapshot;
+      await saveEntries();
+      renderCalendar();
+      renderTotals();
+      showToast('Undone — back to how it was.');
+    });
+    t.appendChild(label);
+    t.appendChild(btn);
+    t.classList.add('show', 'actionable');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(()=>{
+      t.classList.remove('show', 'actionable');
+      if(token === undoToken) undoToken++;
+    }, 7000);
+  }
+
+  // ---------- Data & backup ----------
+  let lastBackupMs = null;
+  const BACKUP_REMIND_DAYS = 7;
+
+  function formatBackupDate(ms){
+    return new Date(ms).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('sslToast');
+    if(!t) return;
+    undoToken++; // a new message replaces any Undo offer still on screen
+    t.classList.remove('actionable');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(()=> t.classList.remove('show'), Math.max(2800, msg.length * 55));
+  }
+
+  function renderStorageStatus(){
+    const statusEl = document.getElementById('storageStatusLine');
+    const backupEl = document.getElementById('lastBackupLine');
+    const reminder = document.getElementById('backupReminder');
+    if(!statusEl || !backupEl || !reminder) return;
+
+    let text;
+    if(cloudState === 'on'){
+      text = '✓ Synced to your Claude account — kept permanently, even if your phone clears its browser data.';
+    } else if(cloudState === 'connecting'){
+      text = 'Connecting to your Claude account…';
+    } else if(cloudState === 'error'){
+      text = '⚠ Couldn’t reach your Claude account just now. Changes are saved on this phone and will sync next time.';
+    } else if(backend === 'memory'){
+      text = '⚠ This browser isn’t allowing saved data (for example Private Browsing). Anything entered is lost when it closes — back up before leaving.';
+    } else if(hasClaudeStorageApi){
+      text = '⚠ You’re using the copy inside Claude’s file preview. Your iPhone can clear data saved here — use the hosted link and keep a backup.';
+    } else {
+      text = 'Saved on this phone only. iPhone can clear website data that isn’t used for a while — keep a backup.'
+        + (persistState === 'granted' ? ' Storage protection is on.' : '');
+    }
+    if(cloudState === 'on' && cloudTooLarge.size){
+      text += ' Your photo or signature is too large to sync, so it stays on this phone only — it’s still included in backups.';
+    }
+    statusEl.textContent = text;
+
+    backupEl.textContent = lastBackupMs ? `Last backup: ${formatBackupDate(lastBackupMs)}` : 'Not backed up yet.';
+
+    const hasData = Object.keys(entries).length > 0
+      || Object.keys(DEFAULT_PROFILE).some(k => String(profile[k] || '').trim());
+    const daysSince = lastBackupMs ? (Date.now() - lastBackupMs) / 86400000 : Infinity;
+    const cloudSafe = cloudState === 'on' || cloudState === 'connecting';
+    const needsReminder = !cloudSafe && hasData && daysSince >= BACKUP_REMIND_DAYS;
+    reminder.style.display = needsReminder ? 'flex' : 'none';
+    if(needsReminder){
+      document.getElementById('backupReminderText').textContent = lastBackupMs
+        ? `Last backup was ${Math.floor(daysSince)} days ago. Keep a copy in case your phone clears saved data.`
+        : 'No backup saved yet. Keep a copy in case your phone clears saved data.';
+    }
+  }
+
+  // A backup is one file holding everything: calendar, imported totals,
+  // crew profile, signature (including its code), photo and custom title.
+  async function buildBackup(){
+    const data = {};
+    for(const key of DATA_KEYS){
+      const v = await storageGet(key);
+      if(v !== null) data[key] = v;
+    }
+    return { app: 'sea-service-log', version: 2, exportedAt: new Date().toISOString(), data };
+  }
+
+  async function runBackup(){
+    const backup = await buildBackup();
+    const d = new Date();
+    const filename = `sea-service-log-backup-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json' });
+    const saved = await saveFile(filename, blob);
+    if(saved){
+      lastBackupMs = Date.now();
+      await rawSet(LAST_BACKUP_KEY, String(lastBackupMs));
+      renderStorageStatus();
+      showToast('Backup ready — keep it somewhere safe, like Files or iCloud Drive.');
+    }
+  }
+
+  document.getElementById('backupBtn').addEventListener('click', runBackup);
+  document.getElementById('backupReminderBtn').addEventListener('click', runBackup);
+
+  const restoreOverlay = document.getElementById('restoreOverlay');
+  const restoreFileInput = document.getElementById('restoreFileInput');
+  let pendingRestore = null;
+
+  function parseBackupText(text){
+    const obj = JSON.parse(text);
+    if(obj && obj.app === 'sea-service-log' && obj.data && typeof obj.data === 'object'){
+      const data = {};
+      DATA_KEYS.forEach(k=>{ if(typeof obj.data[k] === 'string') data[k] = obj.data[k]; });
+      return { data, exportedAt: obj.exportedAt || null, entriesOnly: false };
+    }
+    // Files from the older "Export data as JSON" option held only the calendar.
+    const isDateMap = obj && typeof obj === 'object' && !Array.isArray(obj)
+      && Object.keys(obj).every(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    if(isDateMap){
+      return { data: { [STORAGE_KEY]: JSON.stringify(obj) }, exportedAt: null, entriesOnly: true };
+    }
+    throw new Error('Not a Sea Service Log backup');
+  }
+
+  function describeBackup(b){
+    const days = Object.keys(safeParse(b.data[STORAGE_KEY] || '{}', {})).length;
+    const dayText = `${days} logged day${days === 1 ? '' : 's'}`;
+    if(b.entriesOnly){
+      return `Older backup file with calendar entries only (${dayText}). Your profile, signature and other settings stay as they are.`;
+    }
+    const exportedMs = b.exportedAt ? Date.parse(b.exportedAt) : NaN;
+    const when = isNaN(exportedMs) ? 'Backup file' : `Backup from ${formatBackupDate(exportedMs)}`;
+    const sig = safeParse(b.data[SIGNATURE_KEY] || 'null', null);
+    const prof = safeParse(b.data[PROFILE_KEY] || '{}', {});
+    const av = b.data[AVATAR_KEY];
+    const hasPhoto = !!av && (av.startsWith('data:image') || !!safeParse(av, null));
+    const parts = [
+      dayText,
+      Object.keys(DEFAULT_PROFILE).some(k => String(prof[k] || '').trim()) ? 'crew profile' : null,
+      sig && sig.image ? 'signature' : null,
+      hasPhoto ? 'photo' : null,
+    ].filter(Boolean);
+    return `${when}: ${parts.join(', ')}.`;
+  }
+
+  function showRestoreError(msg){
+    const el = document.getElementById('restoreError');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function openRestoreSheet(){
+    pendingRestore = null;
+    restoreFileInput.value = '';
+    document.getElementById('restoreSummary').style.display = 'none';
+    document.getElementById('restoreConfirmBtn').disabled = true;
+    document.getElementById('restorePinInput').value = '';
+    // Restoring replaces the crew profile, so it needs the code once one exists.
+    document.getElementById('restorePinRow').style.display = (signature && signature.pin) ? '' : 'none';
+    showRestoreError('');
+    restoreOverlay.classList.add('show');
+  }
+
+  function closeRestoreSheet(){
+    restoreOverlay.classList.remove('show');
+    pendingRestore = null;
+  }
+
+  document.getElementById('restoreBtn').addEventListener('click', openRestoreSheet);
+  document.getElementById('restorePickBtn').addEventListener('click', ()=> restoreFileInput.click());
+  document.getElementById('restoreCancelBtn').addEventListener('click', closeRestoreSheet);
+  restoreOverlay.addEventListener('click', (e)=>{ if(e.target === restoreOverlay) closeRestoreSheet(); });
+
+  restoreFileInput.addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    showRestoreError('');
+    try{
+      pendingRestore = parseBackupText(await file.text());
+      const summary = document.getElementById('restoreSummary');
+      summary.textContent = describeBackup(pendingRestore);
+      summary.style.display = 'block';
+      document.getElementById('restoreConfirmBtn').disabled = false;
+    }catch(err){
+      pendingRestore = null;
+      document.getElementById('restoreSummary').style.display = 'none';
+      document.getElementById('restoreConfirmBtn').disabled = true;
+      showRestoreError('That file isn’t a Sea Service Log backup. Choose the .json file saved with “Download backup”.');
+    }
+  });
+
+  document.getElementById('restoreConfirmBtn').addEventListener('click', async ()=>{
+    if(!pendingRestore) return;
+    if(signature && signature.pin){
+      const pin = document.getElementById('restorePinInput').value.trim();
+      if(pin !== signature.pin){ showRestoreError('Incorrect code — try again.'); return; }
+    }
+    const toWrite = { ...pendingRestore.data };
+    if(!pendingRestore.entriesOnly){
+      // A full backup is a complete snapshot: anything it doesn't contain was
+      // empty when it was saved, so those items go back to their defaults.
+      const defaults = {
+        [STORAGE_KEY]: '{}',
+        [BASELINE_KEY]: JSON.stringify(IMPORTED_BASELINE),
+        [SIGNATURE_KEY]: 'null',
+        [TITLE_KEY]: DEFAULT_TITLE,
+        [AVATAR_KEY]: 'null',
+        [PROFILE_KEY]: JSON.stringify(DEFAULT_PROFILE),
+      };
+      DATA_KEYS.forEach(k=>{ if(!(k in toWrite)) toWrite[k] = defaults[k]; });
+    }
+    for(const key of Object.keys(toWrite)){
+      const ok = await storageSet(key, toWrite[key]);
+      if(!ok){ showRestoreError('The restore didn’t finish saving on this phone — please try again.'); return; }
+    }
+    await loadEntries();
+    closeRestoreSheet();
+    showToast('Backup restored.');
+  });
+
+  // ---------- PDF period summary ----------
+  let summaryPeriodMode = 'month';
+
+  document.querySelectorAll('.period-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      summaryPeriodMode = tab.dataset.period;
+      document.getElementById('monthPicker').style.display = summaryPeriodMode === 'month' ? 'block' : 'none';
+      document.getElementById('rangePicker').style.display = summaryPeriodMode === 'range' ? 'block' : 'none';
+    });
+  });
+
+  (function initSummaryDefaults(){
+    const now = new Date();
+    document.getElementById('monthInput').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  })();
+
+  function formatNiceDate(key){
+    const [y,m,d] = key.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function computeCountsForKeys(keys){
+    const counts = { onboard:0, general:0, sea:0, yard:0, standby:0, watch:0, disembarked:0 };
+    keys.forEach(key=>{
+      const types = entries[key].types || [];
+      if(!types.length) return;
+      types.forEach(id=>{ if(TYPES.some(t => t.id === id)) counts[id]++; });
+      if(types.some(id => id !== 'disembarked' && TYPES.some(t => t.id === id))) counts.onboard++;
+    });
+    return counts;
+  }
+
+  // The built-in PDF engine embeds JPEG images, so the photo and signature
+  // (which may be saved as PNG) are converted on a white background first.
+  function toJpegDataUrl(dataUrl){
+    if(!dataUrl || String(dataUrl).startsWith('data:image/jpeg')) return Promise.resolve(dataUrl);
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 1; canvas.height = img.height || 1;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
+      };
+      img.onerror = ()=> reject(new Error('Could not read image'));
+      img.src = dataUrl;
+    });
+  }
+
+  async function buildPeriodSummaryPdf(startKey, endKey, periodLabel, opts = {}){
+    const draft = !!opts.draft;
+    const avatarJpeg = (avatar && avatar.dataUrl) ? await toJpegDataUrl(avatar.dataUrl).catch(()=>null) : null;
+    const signatureJpeg = (!draft && signature && signature.image) ? await toJpegDataUrl(signature.image).catch(()=>null) : null;
+    const doc = new window.MiniPDF();
+    doc.setTitle(`${appTitleEl.textContent || 'Sea Service Log'} — ${periodLabel}`);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    const contentWidth = pageWidth - margin*2;
+
+    // Palette — lighter navy and gold, matching the app.
+    const navy = [21, 56, 90];
+    const navyText = [16, 34, 51];
+    const gold = [201, 162, 39];
+    const cream = [237, 231, 214];
+    const muted = [120, 128, 135];
+    const rowTint = [250, 245, 229];
+
+    // This period's logged days
+    const periodKeys = Object.keys(entries)
+      .filter(k => k >= startKey && k <= endKey && entries[k].types && entries[k].types.length)
+      .sort();
+    const periodCounts = computeCountsForKeys(periodKeys);
+
+    // All-time = imported baseline + every day ever logged in the app
+    const allLoggedKeys = Object.keys(entries).filter(k => entries[k].types && entries[k].types.length);
+    const loggedAllTime = computeCountsForKeys(allLoggedKeys);
+    const allTimeCounts = {
+      onboard: loggedAllTime.onboard + baseline.onboard,
+      sea: loggedAllTime.sea + baseline.sea,
+      yard: loggedAllTime.yard + baseline.yard,
+      standby: loggedAllTime.standby + baseline.standby,
+      watch: loggedAllTime.watch + baseline.watch,
+      disembarked: loggedAllTime.disembarked + baseline.disembarked,
+    };
+    // How the all-time figure is made up, matching the Totals screen card.
+    const allTimeSubtitle = baseline.onboard
+      ? `${IMPORTED_RECORD_NAME ? 'PYA record' : 'Imported totals'}: ${baseline.onboard} + logged in this app: ${loggedAllTime.onboard}`
+      : 'Everything logged in this app';
+
+    // ---- Header band ----
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageWidth, 76, 'F');
+    doc.setFillColor(...gold);
+    doc.rect(0, 76, pageWidth, 2.5, 'F');
+
+    let titleX = margin;
+    if(avatar && avatar.dataUrl){
+      const boxSize = 48;
+      const boxY = 14;
+      const iw = avatar.width || boxSize;
+      const ih = avatar.height || boxSize;
+      // Fit the whole photo inside the box (never crops), centered if it
+      // isn't square.
+      const scale = Math.min(boxSize / iw, boxSize / ih);
+      const drawW = iw * scale, drawH = ih * scale;
+      const drawX = margin + (boxSize - drawW) / 2;
+      const drawY = boxY + (boxSize - drawH) / 2;
+
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(1);
+      doc.roundedRect(margin, boxY, boxSize, boxSize, 4, 4, 'S');
+      // A photo that can't be read is left out rather than blocking the PDF.
+      if(avatarJpeg){ try{ doc.addImage(avatarJpeg, 'JPEG', drawX, drawY, drawW, drawH); }catch(e){ console.warn('Photo left out of PDF', e); } }
+
+      titleX = margin + boxSize + 14;
+    }
+
+    const titleText = appTitleEl.textContent || 'Sea Service Log';
+    doc.setFont('times', 'bold');
+    let titleFontSize = 19;
+    doc.setFontSize(titleFontSize);
+    const maxTitleWidth = pageWidth - margin - titleX;
+    while(doc.getTextWidth(titleText) > maxTitleWidth && titleFontSize > 12){
+      titleFontSize -= 1;
+      doc.setFontSize(titleFontSize);
+    }
+    doc.setTextColor(...gold);
+    doc.text(titleText, titleX, 32);
+
+    doc.setTextColor(...cream);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.text(periodLabel, titleX, 52);
+    if(draft){
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...gold);
+      doc.text('DRAFT — NOT SIGNED', pageWidth - margin, 52, { align:'right' });
+    }
+
+    let y = 100;
+
+    // ---- Personal profile (only shown if at least one field has been filled in) ----
+    const profileGridFields = [
+      ['Name', profile.name],
+      ['Surname', profile.surname],
+      ['Nationality', profile.nationality],
+      ['Current CoC', profile.coc],
+      ['Vessel GT', profile.vesselGT],
+      ['Length of vessel', profile.vesselLength],
+      ['Rank on board', profile.rank],
+    ].filter(([, v]) => v && v.trim());
+    const vesselNameValue = (profile.vesselName || '').trim();
+    const hasAnyProfile = profileGridFields.length > 0 || vesselNameValue;
+
+    if(hasAnyProfile){
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...navyText);
+      doc.text('Personal Profile', margin, y);
+      y += 10;
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(1.2);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 18;
+
+      doc.setFontSize(9.5);
+      const lineHeight = 12;
+      const labelColWidth = 92; // fixed, so values line up at the same offset on every row
+
+      // Vessel name gets its own full-width, wrapped line — it's the field
+      // most likely to run long and would otherwise spill into the next column.
+      if(vesselNameValue){
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...navyText);
+        doc.text('Name of vessel', margin, y);
+        doc.setFont('helvetica', 'normal');
+        const wrapped = doc.splitTextToSize(vesselNameValue, contentWidth - labelColWidth);
+        wrapped.forEach((line, li)=> doc.text(line, margin + labelColWidth, y + li * lineHeight));
+        y += Math.max(15, wrapped.length * lineHeight + 3);
+      }
+
+      // Remaining fields: two columns, each value measured and wrapped to
+      // its actual available width so nothing can overrun into the other column.
+      const colWidth = contentWidth / 2 - 10;
+      const rowCount = Math.ceil(profileGridFields.length / 2);
+      for(let r = 0; r < rowCount; r++){
+        let rowLines = 1;
+        const cells = [0, 1].map(col=>{
+          const idx = r * 2 + col;
+          if(idx >= profileGridFields.length) return null;
+          const [label, value] = profileGridFields[idx];
+          const x = margin + col * (contentWidth / 2);
+          const wrapped = doc.splitTextToSize(value, colWidth - labelColWidth);
+          rowLines = Math.max(rowLines, wrapped.length);
+          return { label, x, wrapped };
+        });
+
+        const rowY = y;
+        cells.forEach(cell=>{
+          if(!cell) return;
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...navyText);
+          doc.text(cell.label, cell.x, rowY);
+          doc.setFont('helvetica', 'normal');
+          cell.wrapped.forEach((line, li)=> doc.text(line, cell.x + labelColWidth, rowY + li * lineHeight));
+        });
+
+        y += Math.max(15, rowLines * lineHeight + 3);
+      }
+
+      y += 14;
+    }
+
+    // ---- Two summary panels, side by side ----
+    const colGap = 20;
+    const colWidth = (contentWidth - colGap) / 2;
+    const leftX = margin;
+    const rightX = margin + colWidth + colGap;
+
+    function drawPanel(x, width, title, subtitle, counts, startY){
+      let py = startY;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...navyText);
+      doc.text(title, x, py);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(subtitle, x, py + 11);
+      py += 21;
+
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(1.2);
+      doc.line(x, py, x + width, py);
+      py += 17;
+
+      const rows = [
+        ['Onboard Service', counts.onboard],
+        ['Sea Service', counts.sea],
+        ['Navigational Watchkeeping', counts.watch],
+        ['Standby Service', counts.standby],
+        ['Yard Service', counts.yard],
+        ['Disembarked', counts.disembarked],
+      ];
+
+      doc.setFontSize(9.5);
+      rows.forEach(([label, value])=>{
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...navyText);
+        doc.text(label, x, py);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(value), x + width, py, { align:'right' });
+        py += 16;
+      });
+
+      return py;
+    }
+
+    const leftEndY = drawPanel(leftX, colWidth, 'This period', periodLabel, periodCounts, y);
+    const rightEndY = drawPanel(rightX, colWidth, 'All-time totals', allTimeSubtitle, allTimeCounts, y);
+    y = Math.max(leftEndY, rightEndY) + 16;
+
+    // ---- Daily log ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...navyText);
+    doc.text('Daily log for this period', margin, y);
+    y += 11;
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(1.2);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 14;
+
+    // Key explaining the letter codes used below, built straight from TYPES
+    // so it can never drift out of sync with what the letters actually mean.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...navyText);
+    doc.text('Key:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...muted);
+    const keyText = TYPES.map(t => `${t.letter} = ${t.name}`).join('    ');
+    const keyLines = doc.splitTextToSize(keyText, contentWidth - 26);
+    keyLines.forEach((line, li) => doc.text(line, margin + 26, y + li * 9));
+    y += keyLines.length * 9 + 12;
+
+    function formatShortDate(key){
+      const [, m, d] = key.split('-').map(Number);
+      return new Date(2000, m - 1, d).toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+    }
+
+    function letterCodesFor(key){
+      const types = entries[key].types || [];
+      const recognized = types.filter(id => TYPES.some(t => t.id === id));
+      return recognized.length
+        ? recognized.map(id => TYPES.find(t => t.id === id).letter).join(', ')
+        : '—';
+    }
+
+    doc.setFontSize(8.5);
+
+    if(periodKeys.length === 0){
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...muted);
+      doc.text('No days logged in this period.', margin, y);
+      y += 14;
+    } else {
+      // Adaptive columns: use the fewest columns (up to 4) that fit the whole
+      // period in the space left on this page. Longer periods automatically
+      // step up to more columns; once 4 columns still isn't enough, it stays
+      // at 4 and simply continues onto additional pages.
+      const dailyColGap = 14;
+      const dateColOffset = 46; // extra headroom: some locales render September as 'Sept' (4 letters)
+      const rowHeight = 13.5;
+
+      // Keep the bottom-right corner clear for the signature on this page.
+      const signatureReserve = (draft || (signature && signature.image)) ? 64 : 0;
+      const availableHeight = pageHeight - y - 46 - signatureReserve;
+      const maxRowsThatFit = Math.max(1, Math.floor(availableHeight / rowHeight));
+
+      let numColumns = 4;
+      for(let cols = 1; cols <= 4; cols++){
+        if(Math.ceil(periodKeys.length / cols) <= maxRowsThatFit){
+          numColumns = cols;
+          break;
+        }
+      }
+
+      const dailyColWidth = (contentWidth - (numColumns - 1) * dailyColGap) / numColumns;
+      const rowsPerColumn = Math.ceil(periodKeys.length / numColumns);
+      const columns = [];
+      for(let c = 0; c < numColumns; c++){
+        columns.push(periodKeys.slice(c * rowsPerColumn, (c + 1) * rowsPerColumn));
+      }
+      const maxRows = rowsPerColumn;
+
+      function drawDayCell(x, rowY, key){
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...navyText);
+        doc.text(formatShortDate(key), x, rowY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(letterCodesFor(key), x + dateColOffset, rowY);
+      }
+
+      for(let i = 0; i < maxRows; i++){
+        if(y > pageHeight - 46){
+          doc.addPage();
+          y = 46;
+        }
+        if(i % 2 === 0){
+          doc.setFillColor(...rowTint);
+          doc.rect(margin - 4, y - 9, contentWidth + 8, rowHeight, 'F');
+        }
+        columns.forEach((colKeys, c)=>{
+          if(colKeys[i]) drawDayCell(margin + c * (dailyColWidth + dailyColGap), y, colKeys[i]);
+        });
+        y += rowHeight;
+      }
+    }
+
+    // A long range that spills onto extra pages can still reach the
+    // signature corner on its last page — if so, give the signature a
+    // clean space on a new page rather than placing it over the log.
+    if((draft || (signature && signature.image)) && periodKeys.length && (y - 9) > pageHeight - 98){
+      doc.addPage();
+    }
+
+    const pageCount = doc.internal.getNumberOfPages();
+
+    // Draft: a clear "not signed" stamp where the signature would go.
+    if(draft){
+      doc.setPage(pageCount);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(180, 84, 58);
+      doc.text('DRAFT — NOT SIGNED', pageWidth - margin, pageHeight - 60, { align:'right' });
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(...muted);
+      doc.text('For checking only — download a signed copy to submit.', pageWidth - margin, pageHeight - 48, { align:'right' });
+    }
+    // Digital signature — bottom-right corner of the last page
+    else if(signature && signature.image){
+      doc.setPage(pageCount);
+      const maxW = 110, maxH = 42;
+      const iw = signature.width || 200;
+      const ih = signature.height || 80;
+      const scale = Math.min(maxW / iw, maxH / ih);
+      const drawW = iw * scale;
+      const drawH = ih * scale;
+      const sigX = pageWidth - margin - drawW;
+      const lineY = pageHeight - 50;
+      const sigY = lineY - drawH - 2;
+
+      // A signed summary must never go out without its signature.
+      try{
+        if(!signatureJpeg) throw new Error('no image');
+        doc.addImage(signatureJpeg, 'JPEG', sigX, sigY, drawW, drawH);
+      }catch(e){
+        const err = new Error('Signature could not be added');
+        err.userMessage = 'Your saved signature couldn’t be added to the PDF. Add it again under Crew Profile → Digital signature.';
+        throw err;
+      }
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(0.8);
+      doc.line(sigX, lineY, sigX + drawW, lineY);
+
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(...muted);
+      doc.text('Digitally signed', sigX + drawW, lineY + 11, { align:'right' });
+    }
+
+    // Footer on every page
+    const generatedDate = new Date().toLocaleDateString('en-GB');
+    for(let i=1; i<=pageCount; i++){
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...muted);
+      doc.text(`${titleText} — Generated ${generatedDate}${draft ? ' — DRAFT, NOT SIGNED' : ''} — Page ${i} of ${pageCount}`, margin, pageHeight - 20);
+    }
+
+    await saveFile(`sea-service-log_${draft ? 'DRAFT_' : ''}${startKey}_to_${endKey}.pdf`, doc.output('blob'));
+  }
+
+  function getSelectedPeriod(){
+    let startKey, endKey, label;
+    if(summaryPeriodMode === 'month'){
+      const val = document.getElementById('monthInput').value; // "YYYY-MM"
+      if(!val){ showToast('Pick a month first.'); return null; }
+      const [yy, mm] = val.split('-').map(Number);
+      const lastDay = new Date(yy, mm, 0).getDate();
+      startKey = `${yy}-${pad(mm)}-01`;
+      endKey = `${yy}-${pad(mm)}-${pad(lastDay)}`;
+      label = new Date(yy, mm-1, 1).toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+    } else {
+      const fromVal = document.getElementById('summaryFrom').value;
+      const toVal = document.getElementById('summaryTo').value;
+      if(!fromVal || !toVal){ showToast('Pick both a start and end date.'); return null; }
+      startKey = fromVal;
+      endKey = toVal;
+      if(endKey < startKey){ const tmp = startKey; startKey = endKey; endKey = tmp; }
+      label = `${formatNiceDate(startKey)} – ${formatNiceDate(endKey)}`;
+    }
+    return { startKey, endKey, label };
+  }
+
+  document.getElementById('downloadPdfBtn').addEventListener('click', ()=>{
+    const period = getSelectedPeriod();
+    if(!period) return;
+    pendingDownload = period;
+    openSignSheet();
+  });
+
+  // Unsigned draft: same summary, no code or signature, clearly marked DRAFT.
+  document.getElementById('draftPdfBtn').addEventListener('click', async ()=>{
+    const period = getSelectedPeriod();
+    if(!period) return;
+    try{
+      await buildPeriodSummaryPdf(period.startKey, period.endKey, period.label, { draft:true });
+    }catch(e){
+      console.error('Draft PDF failed', e);
+      showToast(e.userMessage || 'Couldn’t create the PDF — please try again.');
+    }
+  });
+
+  // ---------- Digital signature ----------
+  let pendingDownload = null;
+  let sigSetupMode = true;
+  let stagedSignature = null; // { dataUrl, width, height }
+
+  const signOverlay = document.getElementById('signOverlay');
+  const sigFileInput = document.getElementById('sigFileInput');
+  const sigPreviewBox = document.getElementById('sigPreviewBox');
+
+  if(window.pdfjsLib){
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+  }
+
+  // Renders the first page of an uploaded signature PDF to a PNG data URL,
+  // since the summary can only embed images (not another PDF).
+  async function readAndNormalizeSignaturePdf(file){
+    const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+    if(!pdfjsLib) throw new Error('PDF reader not loaded');
+
+    const arrayBuffer = await file.arrayBuffer();
+    // isEvalSupported:false closes CVE-2024-4367 (malicious-PDF script execution) in this pdf.js version.
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, isEvalSupported: false }).promise;
+    const page = await pdf.getPage(1);
+
+    const baseViewport = page.getViewport({ scale: 1 });
+    const maxDim = 500;
+    const scale = maxDim / Math.max(baseViewport.width, baseViewport.height);
+    const viewport = page.getViewport({ scale: Math.min(scale, 3) });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d');
+    // White backing so a transparent PDF page doesn't turn black in the PNG.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    return { dataUrl: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height };
+  }
+
+  function showSigError(msg){
+    const el = document.getElementById('sigError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideSigError(){
+    document.getElementById('sigError').style.display = 'none';
+  }
+
+  sigPreviewBox.addEventListener('click', ()=> sigFileInput.click());
+
+  // ---------- Signature pad: sign with your finger ----------
+  const sigPad = document.getElementById('sigPad');
+  const sigPadHint = document.getElementById('sigPadHint');
+  const PAD_INK = '#14202B';
+  const PAD_LINE = 2.6;
+  let padStrokes = [];   // each stroke is a list of {x, y} points in screen pixels
+  let padDrawing = false;
+  let sigMode = 'draw';  // 'draw' | 'upload'
+  let sigReplaceMode = false;
+
+  function padContext(){
+    const ratio = window.devicePixelRatio || 1;
+    const rect = sigPad.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
+    if(sigPad.width !== Math.round(w * ratio) || sigPad.height !== Math.round(h * ratio)){
+      sigPad.width = Math.round(w * ratio);
+      sigPad.height = Math.round(h * ratio);
+    }
+    const ctx = sigPad.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return { ctx, w, h };
+  }
+
+  // Smooth curves through the touch points, so the signature looks natural.
+  function drawStroke(ctx, pts){
+    if(!pts.length) return;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    if(pts.length === 1) ctx.lineTo(pts[0].x + 0.1, pts[0].y + 0.1);
+    for(let i = 1; i < pts.length - 1; i++){
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, (pts[i].x + pts[i + 1].x) / 2, (pts[i].y + pts[i + 1].y) / 2);
+    }
+    if(pts.length > 1) ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    ctx.stroke();
+  }
+
+  function inkStyle(ctx){
+    ctx.strokeStyle = PAD_INK;
+    ctx.lineWidth = PAD_LINE;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+
+  function redrawPad(){
+    const { ctx, w, h } = padContext();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    inkStyle(ctx);
+    padStrokes.forEach(st => drawStroke(ctx, st));
+    sigPadHint.style.display = padStrokes.length ? 'none' : '';
+  }
+
+  function padPoint(e){
+    const r = sigPad.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  sigPad.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    try{ sigPad.setPointerCapture(e.pointerId); }catch(err){ /* not supported */ }
+    padDrawing = true;
+    padStrokes.push([padPoint(e)]);
+    hideSigError();
+    redrawPad();
+  });
+  sigPad.addEventListener('pointermove', e=>{
+    if(!padDrawing) return;
+    e.preventDefault();
+    const events = (typeof e.getCoalescedEvents === 'function' && e.getCoalescedEvents().length) ? e.getCoalescedEvents() : [e];
+    events.forEach(ev => padStrokes[padStrokes.length - 1].push(padPoint(ev)));
+    redrawPad();
+  });
+  ['pointerup', 'pointercancel'].forEach(t => sigPad.addEventListener(t, ()=>{ padDrawing = false; }));
+
+  document.getElementById('sigPadClearBtn').addEventListener('click', ()=>{
+    padStrokes = [];
+    redrawPad();
+  });
+
+  function padInkLength(){
+    let len = 0;
+    padStrokes.forEach(st=>{ for(let i = 1; i < st.length; i++) len += Math.hypot(st[i].x - st[i - 1].x, st[i].y - st[i - 1].y); });
+    return len;
+  }
+
+  // Crops the drawing to the ink (plus a small margin) and renders it on white.
+  function exportPadSignature(){
+    const pts = padStrokes.flat();
+    const minX = Math.min(...pts.map(q => q.x)), maxX = Math.max(...pts.map(q => q.x));
+    const minY = Math.min(...pts.map(q => q.y)), maxY = Math.max(...pts.map(q => q.y));
+    const margin = 8;
+    const w = (maxX - minX) + margin * 2, h = (maxY - minY) + margin * 2;
+    const scale = Math.min(3, 600 / Math.max(w, h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(scale, 0, 0, scale, (margin - minX) * scale, (margin - minY) * scale);
+    inkStyle(ctx);
+    padStrokes.forEach(st => drawStroke(ctx, st));
+    return { dataUrl: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height };
+  }
+
+  function setSigMode(mode){
+    sigMode = mode;
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.sigmode === mode));
+    document.getElementById('sigDrawBlock').style.display = mode === 'draw' ? 'block' : 'none';
+    document.getElementById('sigUploadBlock').style.display = mode === 'upload' ? 'block' : 'none';
+    hideSigError();
+    if(mode === 'draw') setTimeout(redrawPad, 0);
+  }
+  document.querySelectorAll('.mode-tab').forEach(t => t.addEventListener('click', ()=> setSigMode(t.dataset.sigmode)));
+
+  function updateSignConfirmLabel(){
+    document.getElementById('signConfirmBtn').textContent =
+      (sigSetupMode && !pendingDownload) ? 'Save signature' : 'Sign & download';
+  }
+
+  sigFileInput.addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      stagedSignature = await readAndNormalizeSignaturePdf(file);
+      sigPreviewBox.innerHTML = `<img src="${stagedSignature.dataUrl}" style="max-width:100%; max-height:80px;">`;
+      hideSigError();
+    }catch(err){
+      console.error(err);
+      stagedSignature = null;
+      sigPreviewBox.innerHTML = 'Tap to upload your signature (PDF)';
+      showSigError(!(window.pdfjsLib || window['pdfjs-dist/build/pdf'])
+        ? 'Reading a signature PDF needs an internet connection — connect once to set it up. After that, signed PDFs work offline.'
+        : 'Could not read that PDF. Make sure it\'s a valid PDF file and try again.');
+    }
+  });
+
+  function showSetupBlock(heading, sub, replacing){
+    sigSetupMode = true;
+    sigReplaceMode = !!replacing;
+    document.getElementById('signHeading').textContent = heading;
+    document.getElementById('signSub').textContent = sub;
+    document.getElementById('signSetupBlock').style.display = 'block';
+    document.getElementById('signEnterBlock').style.display = 'none';
+    document.getElementById('sigNewCodeRows').style.display = replacing ? 'none' : 'block';
+    document.getElementById('sigCurrentCodeRow').style.display = replacing ? '' : 'none';
+    stagedSignature = null;
+    padStrokes = [];
+    sigPreviewBox.innerHTML = 'Tap to upload your signature (PDF)';
+    document.getElementById('sigPinNew').value = '';
+    document.getElementById('sigPinConfirm').value = '';
+    document.getElementById('sigPinCurrent').value = '';
+    setSigMode('draw');
+    updateSignConfirmLabel();
+  }
+
+  function showEnterBlock(){
+    sigSetupMode = false;
+    document.getElementById('signHeading').textContent = 'Sign this download';
+    document.getElementById('signSub').textContent = 'Enter your 4-digit code to add your saved signature to this PDF.';
+    document.getElementById('signSetupBlock').style.display = 'none';
+    document.getElementById('signEnterBlock').style.display = 'block';
+    document.getElementById('sigPinEnter').value = '';
+    updateSignConfirmLabel();
+  }
+
+  function openSignSheet(){
+    hideSigError();
+    if(signature && signature.image && signature.pin){
+      showEnterBlock();
+    } else {
+      showSetupBlock('Set up your signature', 'Sign in the box with your finger (or upload a PDF), then choose a 4-digit code. Your signature is saved and added to every signed PDF — after this you only enter the code.', false);
+    }
+    signOverlay.classList.add('show');
+    setTimeout(redrawPad, 0);
+  }
+
+  function closeSignSheet(){
+    signOverlay.classList.remove('show');
+    pendingDownload = null;
+  }
+
+  document.getElementById('signCancelBtn').addEventListener('click', closeSignSheet);
+  signOverlay.addEventListener('click', (e)=>{ if(e.target === signOverlay) closeSignSheet(); });
+
+  function renderSignatureStatus(){
+    const preview = document.getElementById('sigSavedPreview');
+    if(signature && signature.image){
+      preview.innerHTML = `<img src="${signature.image}" alt="Your saved signature">`;
+      preview.style.display = 'block';
+    } else {
+      preview.innerHTML = '';
+      preview.style.display = 'none';
+    }
+    const line = document.getElementById('sigStatusLine');
+    const changeBtn = document.getElementById('changePasswordBtn');
+    const removeBtn = document.getElementById('removeSignatureBtn');
+    if(signature && signature.image && signature.pin){
+      line.textContent = '✓ Signature saved — added automatically to every signed PDF. Only your code is asked for.';
+      changeBtn.disabled = false;
+      removeBtn.disabled = false;
+    } else {
+      line.textContent = 'No signature yet. Add one below — or you\'ll be asked the first time you download a signed PDF.';
+      changeBtn.disabled = true;
+      removeBtn.disabled = true;
+    }
+  }
+
+  // "Add / replace signature" — a standalone flow, independent of downloading.
+  // Replacing an existing signature needs the current code, so nobody else
+  // holding the phone can swap the signature or reset the code.
+  document.getElementById('replaceSignatureBtn').addEventListener('click', ()=>{
+    pendingDownload = null;
+    hideSigError();
+    if(signature && signature.image && signature.pin){
+      showSetupBlock('Replace your signature', 'Sign in the box (or upload a PDF), then enter your current 4-digit code to confirm. Your code stays the same.', true);
+    } else {
+      showSetupBlock('Add your signature', 'Sign in the box with your finger (or upload a PDF), then choose a 4-digit code.', false);
+    }
+    signOverlay.classList.add('show');
+    setTimeout(redrawPad, 0);
+  });
+
+  document.getElementById('signConfirmBtn').addEventListener('click', async ()=>{
+    hideSigError();
+
+    if(sigSetupMode){
+      let sig;
+      if(sigMode === 'draw'){
+        if(padInkLength() < 40){
+          showSigError('Sign in the box with your finger first.');
+          return;
+        }
+        sig = exportPadSignature();
+      } else {
+        if(!stagedSignature){
+          showSigError('Please upload a signature PDF first.');
+          return;
+        }
+        sig = stagedSignature;
+      }
+      let pin;
+      if(sigReplaceMode){
+        const current = document.getElementById('sigPinCurrent').value.trim();
+        if(!signature || current !== signature.pin){
+          showSigError('Incorrect current code — try again.');
+          return;
+        }
+        pin = signature.pin;
+      } else {
+        const pinNew = document.getElementById('sigPinNew').value.trim();
+        const pinConfirm = document.getElementById('sigPinConfirm').value.trim();
+        if(!/^\d{4}$/.test(pinNew)){
+          showSigError('Enter a 4-digit code.');
+          return;
+        }
+        if(pinNew !== pinConfirm){
+          showSigError('Codes do not match.');
+          return;
+        }
+        pin = pinNew;
+      }
+      const replaced = sigReplaceMode;
+      signature = { image: sig.dataUrl, width: sig.width, height: sig.height, pin };
+      const ok = await saveSignature();
+      if(!ok) return;
+      renderSignatureStatus();
+      if(!pendingDownload) showToast(replaced ? 'Signature replaced.' : 'Signature saved.');
+    } else {
+      const pinEnter = document.getElementById('sigPinEnter').value.trim();
+      if(pinEnter !== signature.pin){
+        showSigError('Incorrect code — try again.');
+        return;
+      }
+    }
+
+    signOverlay.classList.remove('show');
+
+    // If this was reached via Download PDF summary, proceed to generate it.
+    // If it was opened standalone (Add / replace signature), there's
+    // nothing further to do — the signature is already saved above.
+    if(pendingDownload){
+      const { startKey, endKey, label } = pendingDownload;
+      pendingDownload = null;
+      try{
+        await buildPeriodSummaryPdf(startKey, endKey, label);
+      }catch(e){
+        console.error('PDF generation failed', e);
+        showToast(e.userMessage || 'Couldn’t create the PDF — please try again.');
+      }
+    }
+  });
+
+  // ---------- Change code (requires the current code) ----------
+  const changePinOverlay = document.getElementById('changePinOverlay');
+
+  function closeChangePinSheet(){ changePinOverlay.classList.remove('show'); }
+
+  document.getElementById('changePasswordBtn').addEventListener('click', ()=>{
+    if(!signature){ return; } // button is disabled in this state, but guard anyway
+    document.getElementById('changePinError').style.display = 'none';
+    document.getElementById('oldPinInput').value = '';
+    document.getElementById('newPinInput').value = '';
+    document.getElementById('newPinConfirmInput').value = '';
+    changePinOverlay.classList.add('show');
+  });
+
+  document.getElementById('changePinCancelBtn').addEventListener('click', closeChangePinSheet);
+  changePinOverlay.addEventListener('click', (e)=>{ if(e.target === changePinOverlay) closeChangePinSheet(); });
+
+  document.getElementById('changePinSaveBtn').addEventListener('click', async ()=>{
+    const errEl = document.getElementById('changePinError');
+    errEl.style.display = 'none';
+
+    const oldPin = document.getElementById('oldPinInput').value.trim();
+    const newPin = document.getElementById('newPinInput').value.trim();
+    const newPinConfirm = document.getElementById('newPinConfirmInput').value.trim();
+
+    if(oldPin !== signature.pin){
+      errEl.textContent = 'Current code is incorrect.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if(!/^\d{4}$/.test(newPin)){
+      errEl.textContent = 'Enter a 4-digit new code.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if(newPin !== newPinConfirm){
+      errEl.textContent = 'New codes do not match.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    signature.pin = newPin;
+    const ok = await saveSignature();
+    if(!ok) return;
+
+    closeChangePinSheet();
+  });
+
+  // ---------- Remove signature (requires the current code) ----------
+  const removeSigOverlay = document.getElementById('removeSigOverlay');
+
+  document.getElementById('removeSignatureBtn').addEventListener('click', ()=>{
+    if(!signature) return; // button is disabled in this state, but guard anyway
+    document.getElementById('removeSigError').style.display = 'none';
+    document.getElementById('removeSigPinInput').value = '';
+    removeSigOverlay.classList.add('show');
+  });
+
+  function closeRemoveSigSheet(){ removeSigOverlay.classList.remove('show'); }
+  document.getElementById('removeSigCancelBtn').addEventListener('click', closeRemoveSigSheet);
+  removeSigOverlay.addEventListener('click', (e)=>{ if(e.target === removeSigOverlay) closeRemoveSigSheet(); });
+
+  document.getElementById('removeSigConfirmBtn').addEventListener('click', async ()=>{
+    const errEl = document.getElementById('removeSigError');
+    errEl.style.display = 'none';
+
+    const pinEntered = document.getElementById('removeSigPinInput').value.trim();
+    if(pinEntered !== signature.pin){
+      errEl.textContent = 'Incorrect code — try again.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    signature = null;
+    const ok = await saveSignature();
+    if(!ok) return;
+
+    renderSignatureStatus();
+    closeRemoveSigSheet();
+  });
+
+  // ---------- Personal touches: avatar photo and custom title ----------
+  const avatarBox = document.getElementById('avatarBox');
+  const avatarFileInput = document.getElementById('avatarFileInput');
+
+  // Small, simple normalization for a personal photo — separate from the
+  // signature's PDF pipeline since this just accepts an ordinary image.
+  function readAndNormalizeAvatarImage(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const img = new Image();
+        img.onload = ()=>{
+          const maxDim = 300;
+          let w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){
+            const scale = maxDim / Math.max(w, h);
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h); // JPEG has no transparency
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.85), width: w, height: h });
+        };
+        img.onerror = ()=> reject(new Error('Could not load image'));
+        img.src = reader.result;
+      };
+      reader.onerror = ()=> reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  avatarBox.addEventListener('click', ()=> avatarFileInput.click());
+  document.getElementById('profileAvatar').addEventListener('click', ()=> avatarFileInput.click());
+  document.getElementById('profilePhotoBtn').addEventListener('click', ()=> avatarFileInput.click());
+
+  // Shows the photo (or the "+" placeholder) in the header and on Crew Profile.
+  function renderAvatar(){
+    const has = !!(avatar && avatar.dataUrl);
+    const html = has ? `<img src="${avatar.dataUrl}" alt="">` : '<span>+</span>';
+    document.getElementById('avatarBox').innerHTML = has ? html
+      : '<span class="ph" id="avatarPlaceholder"><span class="ph-plus">+</span><span class="ph-text">Add photo</span></span>';
+    document.getElementById('profileAvatar').innerHTML = html;
+    document.getElementById('profilePhotoBtn').textContent = has ? 'Change photo' : 'Add photo';
+  }
+
+  avatarFileInput.addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const result = await readAndNormalizeAvatarImage(file);
+      avatar = result;
+      renderAvatar();
+      const ok = await storageSet(AVATAR_KEY, JSON.stringify(avatar));
+      if(!ok) showToast('Couldn’t save your photo on this phone. Try again.');
+    }catch(err){
+      console.error(err);
+      showToast('Couldn’t read that image — try a different photo.');
+    }
+  });
+
+  const renameOverlay = document.getElementById('renameOverlay');
+  const appTitleEl = document.getElementById('appTitle');
+
+  document.getElementById('editTitleBtn').addEventListener('click', ()=>{
+    document.getElementById('titleInput').value = appTitleEl.textContent;
+    renameOverlay.classList.add('show');
+  });
+
+  function closeRenameSheet(){ renameOverlay.classList.remove('show'); }
+  document.getElementById('renameCancelBtn').addEventListener('click', closeRenameSheet);
+  renameOverlay.addEventListener('click', (e)=>{ if(e.target === renameOverlay) closeRenameSheet(); });
+
+  document.getElementById('renameSaveBtn').addEventListener('click', async ()=>{
+    const newTitle = document.getElementById('titleInput').value.trim();
+    if(!newTitle){
+      showToast('Enter a title first.');
+      return;
+    }
+    appTitleEl.textContent = newTitle;
+    document.title = newTitle;
+    const ok = await storageSet(TITLE_KEY, newTitle);
+    if(!ok) showToast('Couldn’t save the new title on this phone. Try again.');
+    closeRenameSheet();
+  });
+
+  // ---------- Personal profile ----------
+  const PROFILE_FIELDS = [
+    { key:'name', label:'Name', inputId:'profileName' },
+    { key:'surname', label:'Surname', inputId:'profileSurname' },
+    { key:'nationality', label:'Nationality', inputId:'profileNationality' },
+    { key:'coc', label:'Current CoC', inputId:'profileCoc' },
+    { key:'vesselName', label:'Name of vessel', inputId:'profileVesselName' },
+    { key:'vesselGT', label:'Vessel GT', inputId:'profileVesselGT' },
+    { key:'vesselLength', label:'Length of vessel', inputId:'profileVesselLength' },
+    { key:'rank', label:'Rank on board', inputId:'profileRank' },
+  ];
+
+  function renderProfile(){
+    const hasAny = PROFILE_FIELDS.some(f => (profile[f.key] || '').trim());
+    const list = document.getElementById('profileList');
+    if(!hasAny){
+      list.innerHTML = `<div class="baseline-row"><span style="color:var(--text-muted);">Nothing added yet — tap Edit to fill this in.</span></div>`;
+      return;
+    }
+    list.innerHTML = PROFILE_FIELDS.map(f => `
+      <div class="baseline-row">
+        <span>${f.label}</span>
+        <span class="n">${(profile[f.key] || '').trim() || '—'}</span>
+      </div>
+    `).join('');
+  }
+
+  const profilePinOverlay = document.getElementById('profilePinOverlay');
+  const profileOverlay = document.getElementById('profileOverlay');
+
+  document.getElementById('editProfileBtn').addEventListener('click', ()=>{
+    const hasExistingProfile = PROFILE_FIELDS.some(f => (profile[f.key] || '').trim());
+    if(hasExistingProfile && signature && signature.pin){
+      // Not the first fill-in, and a code exists to check against — require it.
+      document.getElementById('profilePinError').style.display = 'none';
+      document.getElementById('profilePinInput').value = '';
+      profilePinOverlay.classList.add('show');
+    } else {
+      // First time filling this in — no code to protect yet, so let it through.
+      openProfileEditSheet();
+    }
+  });
+
+  function closeProfilePinSheet(){ profilePinOverlay.classList.remove('show'); }
+  document.getElementById('profilePinCancelBtn').addEventListener('click', closeProfilePinSheet);
+  profilePinOverlay.addEventListener('click', (e)=>{ if(e.target === profilePinOverlay) closeProfilePinSheet(); });
+
+  document.getElementById('profilePinConfirmBtn').addEventListener('click', ()=>{
+    const entered = document.getElementById('profilePinInput').value.trim();
+    if(entered !== signature.pin){
+      const errEl = document.getElementById('profilePinError');
+      errEl.textContent = 'Incorrect code — try again.';
+      errEl.style.display = 'block';
+      return;
+    }
+    closeProfilePinSheet();
+    openProfileEditSheet();
+  });
+
+  function openProfileEditSheet(){
+    PROFILE_FIELDS.forEach(f=>{
+      document.getElementById(f.inputId).value = profile[f.key] || '';
+    });
+    profileOverlay.classList.add('show');
+  }
+
+  function closeProfileEditSheet(){ profileOverlay.classList.remove('show'); }
+  document.getElementById('profileCancelBtn').addEventListener('click', closeProfileEditSheet);
+  profileOverlay.addEventListener('click', (e)=>{ if(e.target === profileOverlay) closeProfileEditSheet(); });
+
+  document.getElementById('profileSaveBtn').addEventListener('click', async ()=>{
+    const updated = {};
+    PROFILE_FIELDS.forEach(f=>{
+      updated[f.key] = document.getElementById(f.inputId).value.trim();
+    });
+    profile = { ...updated, seedVersion: PROFILE_SEED_VERSION };
+    const ok = await saveProfile();
+    if(!ok) return;
+    renderProfile();
+    closeProfileEditSheet();
+  });
+
+  // ---------- Add to Home Screen ----------
+  const A2HS_DISMISSED_KEY = 'vessel-log-a2hs-dismissed';
+  const a2hsOverlay = document.getElementById('a2hsOverlay');
+  const a2hsBanner = document.getElementById('a2hsBanner');
+
+  // iOS Safari sets navigator.standalone to true once launched from a
+  // Home Screen icon. If that's already the case, there's nothing to prompt.
+  const isRunningStandalone = window.navigator && window.navigator.standalone === true;
+
+  function openA2hsSheet(){ a2hsOverlay.classList.add('show'); }
+  function closeA2hsSheet(){ a2hsOverlay.classList.remove('show'); }
+
+  document.getElementById('a2hsCloseBtn').addEventListener('click', closeA2hsSheet);
+  a2hsOverlay.addEventListener('click', (e)=>{ if(e.target === a2hsOverlay) closeA2hsSheet(); });
+
+  document.getElementById('a2hsShowBtn').addEventListener('click', openA2hsSheet);
+  document.getElementById('a2hsSettingsBtn').addEventListener('click', openA2hsSheet);
+
+  document.getElementById('a2hsDismissBtn').addEventListener('click', async ()=>{
+    a2hsBanner.style.display = 'none';
+    await storageSet(A2HS_DISMISSED_KEY, '1');
+  });
+
+  (async function initA2hsBanner(){
+    if(isRunningStandalone) return; // already added — nothing to prompt
+    const dismissed = await storageGet(A2HS_DISMISSED_KEY);
+    if(!dismissed) a2hsBanner.style.display = 'flex';
+  })();
+
+  // Every sheet opens scrolled to the top (heading and Quick log first),
+  // even if it was scrolled down the last time it was used.
+  if(typeof MutationObserver !== 'undefined'){
+    document.querySelectorAll('.overlay').forEach(ov=>{
+      new MutationObserver(()=>{
+        if(ov.classList.contains('show')){ const sh = ov.querySelector('.sheet'); if(sh) sh.scrollTop = 0; }
+      }).observe(ov, { attributes:true, attributeFilter:['class'] });
+    });
+  }
+
+  initialLoadPromise = loadEntries();
+  connectCloud();
+})();
+</script>
+</body>
+</html>
