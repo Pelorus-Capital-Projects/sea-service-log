@@ -910,9 +910,153 @@
     margin-bottom: 12px;
     line-height: 1.4;
   }
+
+  /* Login screen: shown instead of the app until the user logs in. */
+  .auth-screen{ display:none; padding: 36px 18px 0; }
+  body.locked .auth-screen{ display:block; }
+  body.locked .app{ display:none; }
+  .auth-card{ max-width: 400px; margin: 0 auto; }
+  .auth-brand{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom: 22px; }
+  .auth-mark{ width:60px; height:60px; border-radius:14px; display:block; margin-bottom: 12px; box-shadow: 0 0 0 1px var(--border); }
+  .auth-brand h1{ font-family:'Spectral', serif; font-size: 26px; font-weight:600; margin:0; }
+  .auth-brand p{ margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+  .auth-panel{ background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 20px 18px 16px; }
+  .auth-panel h2{ font-family:'Spectral', serif; font-size: 20px; margin: 0 0 4px; }
+  .auth-panel .sub{ color: var(--text-muted); font-size: 13px; margin-bottom: 16px; line-height: 1.45; }
+  .auth-field{ margin-bottom: 12px; }
+  .auth-field label{ display:block; font-size: 12.5px; color: var(--text-muted); margin-bottom: 4px; }
+  .auth-field input[type="text"],
+  .auth-field input[type="password"]{
+    width:100%; background: var(--surface-2); border:1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family:'IBM Plex Sans', sans-serif; font-size:16px; padding: 11px 12px;
+  }
+  .auth-field input:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .auth-input-wrap{ position:relative; }
+  .auth-input-wrap input{ padding-right: 64px !important; }
+  .auth-show{
+    position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color: var(--gold); cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif; font-size: 12.5px; font-weight:600; padding: 8px 10px;
+  }
+  .auth-question{
+    font-size: 13.5px; line-height:1.45; color: var(--text);
+    background: var(--surface-2); border-left: 3px solid var(--gold); border-radius: 8px;
+    padding: 9px 12px; margin: 0 0 8px;
+  }
+  .auth-hint{ font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
+  .auth-check{ display:flex; align-items:center; gap:10px; font-size: 14px; margin: 2px 0 14px; cursor:pointer; user-select:none; }
+  .auth-check input{ width:18px; height:18px; accent-color: var(--gold); margin:0; flex-shrink:0; }
+  .auth-error{ color: #F0A08A; font-size: 13px; margin: 0 0 12px; line-height:1.4; }
+  .auth-notice{ color: var(--gold); font-size: 13px; margin: 0 0 12px; line-height:1.4; }
+  .auth-submit{ width:100%; }
+  .auth-links{ display:flex; justify-content:center; margin-top: 12px; }
+  .auth-link{
+    background:none; border:none; color: var(--gold); cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif; font-size: 13.5px; font-weight:600; padding: 6px 4px;
+  }
+  .auth-loading{ text-align:center; color: var(--text-muted); font-size: 14px; padding: 18px 0; }
 </style>
 </head>
-<body>
+<body class="locked">
+
+<!-- LOGIN SCREEN: shown instead of the app until the user logs in -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg class="auth-mark" viewBox="0 0 180 180" aria-hidden="true">
+        <rect width="180" height="180" fill="#15385A"/>
+        <g stroke="#C9A227" stroke-width="6" stroke-linecap="round">
+          <line x1="24" y1="24" x2="90" y2="90"/><line x1="156" y1="156" x2="90" y2="90"/>
+          <line x1="156" y1="24" x2="90" y2="90"/><line x1="24" y1="156" x2="90" y2="90"/>
+        </g>
+        <circle cx="90" cy="90" r="11" fill="#15385A" stroke="#C9A227" stroke-width="6"/>
+      </svg>
+      <h1 id="authAppTitle">Sea Service Log</h1>
+      <p>Your personal record of days aboard.</p>
+    </div>
+
+    <div class="auth-panel" id="authLoading"><div class="auth-loading">Opening your log…</div></div>
+
+    <form class="auth-panel" id="authSetupForm" novalidate style="display:none;">
+      <h2>Set up your login</h2>
+      <div class="sub">Choose a username and password. You’ll need them each time you open the app.</div>
+      <div class="auth-notice" id="setupNotice" style="display:none;"></div>
+      <div class="auth-error" id="setupError" style="display:none;"></div>
+      <div class="auth-field">
+        <label for="setupUsername">Username</label>
+        <input type="text" id="setupUsername" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40">
+      </div>
+      <div class="auth-field">
+        <label for="setupPassword">Password</label>
+        <div class="auth-input-wrap">
+          <input type="password" id="setupPassword" name="password" autocomplete="new-password" maxlength="100">
+          <button type="button" class="auth-show" data-target="setupPassword">Show</button>
+        </div>
+        <div class="auth-hint">At least 6 characters.</div>
+      </div>
+      <div class="auth-field">
+        <label for="setupPassword2">Confirm password</label>
+        <input type="password" id="setupPassword2" autocomplete="new-password" maxlength="100">
+      </div>
+      <div class="auth-field">
+        <label for="setupAnswer">Password recovery question</label>
+        <div class="auth-question" id="setupQuestion"></div>
+        <input type="text" id="setupAnswer" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="80" placeholder="Your answer">
+        <div class="auth-hint">Used to reset your password if you forget it. Capitals, spaces and punctuation don’t matter.</div>
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit" id="setupSubmitBtn">Create login</button>
+      <div class="auth-links"><button type="button" class="auth-link" id="setupRestoreLink">Restore from a backup instead</button></div>
+    </form>
+
+    <form class="auth-panel" id="authLoginForm" novalidate style="display:none;">
+      <h2>Log in</h2>
+      <div class="sub">Enter your username and password to open your log.</div>
+      <div class="auth-notice" id="loginNotice" style="display:none;"></div>
+      <div class="auth-error" id="loginError" style="display:none;"></div>
+      <div class="auth-field">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40">
+      </div>
+      <div class="auth-field">
+        <label for="loginPassword">Password</label>
+        <div class="auth-input-wrap">
+          <input type="password" id="loginPassword" name="password" autocomplete="current-password" maxlength="100">
+          <button type="button" class="auth-show" data-target="loginPassword">Show</button>
+        </div>
+      </div>
+      <label class="auth-check" id="rememberRow"><input type="checkbox" id="rememberMe"> Keep me logged in on this device</label>
+      <button type="submit" class="btn btn-primary auth-submit" id="loginSubmitBtn">Log in</button>
+      <div class="auth-links"><button type="button" class="auth-link" id="forgotLink">Forgot password?</button></div>
+    </form>
+
+    <form class="auth-panel" id="authRecoverForm" novalidate style="display:none;">
+      <h2>Reset your password</h2>
+      <div class="sub">Answer your recovery question, then choose a new password.</div>
+      <div class="auth-error" id="recoverError" style="display:none;"></div>
+      <input type="text" id="recoverUsername" autocomplete="username" tabindex="-1" aria-hidden="true" style="display:none;">
+      <div class="auth-field">
+        <label for="recoverAnswer">Recovery question</label>
+        <div class="auth-question" id="recoverQuestion"></div>
+        <input type="text" id="recoverAnswer" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="80" placeholder="Your answer">
+      </div>
+      <div class="auth-field">
+        <label for="recoverPassword">New password</label>
+        <div class="auth-input-wrap">
+          <input type="password" id="recoverPassword" autocomplete="new-password" maxlength="100">
+          <button type="button" class="auth-show" data-target="recoverPassword">Show</button>
+        </div>
+        <div class="auth-hint">At least 6 characters.</div>
+      </div>
+      <div class="auth-field">
+        <label for="recoverPassword2">Confirm new password</label>
+        <input type="password" id="recoverPassword2" autocomplete="new-password" maxlength="100">
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit" id="recoverSubmitBtn">Reset password</button>
+      <div class="auth-links"><button type="button" class="auth-link" id="backToLoginLink">Back to log in</button></div>
+    </form>
+  </div>
+</div>
+
 <div class="app">
 
   <div class="a2hs-banner" id="a2hsBanner" style="display:none;">
@@ -1117,12 +1261,21 @@
         <div class="baseline-title">Backup &amp; data</div>
       </div>
       <div class="sig-status" id="storageStatusLine"></div>
-      <div class="sig-status">One backup file holds everything — calendar, totals, profile, signature and photo. Keep it private: it includes your signature code.</div>
+      <div class="sig-status">One backup file holds everything — calendar, totals, profile, signature, photo and login. Keep it private: it includes your signature code.</div>
       <div class="sig-status" id="lastBackupLine" style="margin-top:-6px;"></div>
       <div style="display:flex; gap:10px; margin-bottom:10px;">
         <button class="btn btn-primary" id="backupBtn" style="flex:1;">Download backup</button>
         <button class="btn btn-ghost" id="restoreBtn" style="flex:1;">Upload backup</button>
       </div>
+    </div>
+
+    <div class="baseline-section">
+      <div class="baseline-header">
+        <div class="baseline-title">Login</div>
+        <button class="edit-link" id="loginChangeBtn">Change</button>
+      </div>
+      <div class="sig-status" id="loginStatusLine"></div>
+      <button class="btn btn-ghost" id="logoutBtn" style="width:100%; margin-bottom:10px;">Log out</button>
     </div>
   </div>
 
@@ -1407,6 +1560,47 @@
       <button class="btn btn-ghost" id="profilePinCancelBtn">Cancel</button>
       <button class="btn btn-primary" id="profilePinConfirmBtn">Confirm</button>
     </div>
+  </div>
+</div>
+
+<!-- CHANGE LOGIN SHEET -->
+<div class="overlay" id="loginChangeOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Change login</h2>
+    <div class="sub">Enter your current password, then change what you need. Leave a box empty to keep what you have.</div>
+
+    <div id="loginChangeError" class="sig-error" style="display:none;"></div>
+
+    <form id="loginChangeForm" novalidate>
+      <div class="stacked-field">
+        <label for="lcCurrent">Current password</label>
+        <input type="password" id="lcCurrent" autocomplete="current-password" maxlength="100">
+      </div>
+      <div class="stacked-field">
+        <label for="lcUsername">Username</label>
+        <input type="text" id="lcUsername" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40">
+      </div>
+      <div class="stacked-field-row">
+        <div class="stacked-field">
+          <label for="lcPassword">New password</label>
+          <input type="password" id="lcPassword" autocomplete="new-password" maxlength="100" placeholder="Keep current">
+        </div>
+        <div class="stacked-field">
+          <label for="lcPassword2">Confirm new</label>
+          <input type="password" id="lcPassword2" autocomplete="new-password" maxlength="100">
+        </div>
+      </div>
+      <div class="stacked-field">
+        <label for="lcAnswer">New recovery answer</label>
+        <div class="auth-question" id="lcQuestion"></div>
+        <input type="text" id="lcAnswer" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="80" placeholder="Keep current answer">
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="lcCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="lcSaveBtn">Save</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1755,6 +1949,7 @@ window.MiniPDF = (function(){
   const TITLE_KEY = 'vessel-log-title';
   const AVATAR_KEY = 'vessel-log-avatar';
   const PROFILE_KEY = 'vessel-log-profile';
+  const AUTH_KEY = 'vessel-log-login';
 
   const DEFAULT_PROFILE = { name:'', surname:'', nationality:'', coc:'', vesselName:'', vesselGT:'', vesselLength:'', rank:'' };
   const DEFAULT_TITLE = 'Sea Service Log';
@@ -1777,7 +1972,7 @@ window.MiniPDF = (function(){
   const LAST_BACKUP_KEY = 'vessel-log-last-backup';
   const META_KEY = 'vessel-log-sync-meta';
   const RECOVERED_KEY = 'vessel-log-recovered-v2';
-  const DATA_KEYS = [STORAGE_KEY, BASELINE_KEY, SIGNATURE_KEY, TITLE_KEY, AVATAR_KEY, PROFILE_KEY];
+  const DATA_KEYS = [STORAGE_KEY, BASELINE_KEY, SIGNATURE_KEY, TITLE_KEY, AVATAR_KEY, PROFILE_KEY, AUTH_KEY];
   const SYNC_KEYS = DATA_KEYS.concat(['vessel-log-a2hs-dismissed']);
   const CLOUD_MAX_CHARS = 240000; // stays under the cloud store's 256 KiB per-document limit
 
@@ -2146,6 +2341,8 @@ window.MiniPDF = (function(){
       }
     }
 
+    auth = parseAuth(await storageGet(AUTH_KEY));
+
     lastBackupMs = Number(await rawGet(LAST_BACKUP_KEY)) || null;
 
     renderCalendar();
@@ -2153,6 +2350,7 @@ window.MiniPDF = (function(){
     renderSignatureStatus();
     renderProfile();
     renderStorageStatus();
+    refreshAuthGate();
   }
 
   async function saveEntries(){
@@ -2841,6 +3039,7 @@ window.MiniPDF = (function(){
       Object.keys(DEFAULT_PROFILE).some(k => String(prof[k] || '').trim()) ? 'crew profile' : null,
       sig && sig.image ? 'signature' : null,
       hasPhoto ? 'photo' : null,
+      parseAuth(b.data[AUTH_KEY]) ? 'login' : null,
     ].filter(Boolean);
     return `${when}: ${parts.join(', ')}.`;
   }
@@ -2909,14 +3108,25 @@ window.MiniPDF = (function(){
         [AVATAR_KEY]: 'null',
         [PROFILE_KEY]: JSON.stringify(DEFAULT_PROFILE),
       };
-      DATA_KEYS.forEach(k=>{ if(!(k in toWrite)) toWrite[k] = defaults[k]; });
+      // A backup made before logins existed has none: the current login stays.
+      DATA_KEYS.forEach(k=>{ if(!(k in toWrite) && k in defaults) toWrite[k] = defaults[k]; });
     }
+    const authBefore = auth ? JSON.stringify(auth) : null;
     for(const key of Object.keys(toWrite)){
       const ok = await storageSet(key, toWrite[key]);
       if(!ok){ showRestoreError('The restore didn’t finish saving on this phone — please try again.'); return; }
     }
     await loadEntries();
     closeRestoreSheet();
+    if(authState !== 'unlocked'){
+      // Restored from the login screen on a new device.
+      if(auth) lockApp('login', 'Backup restored. Log in with the username and password saved in that backup.');
+      else lockApp('setup', 'Backup restored. Now set up a login to protect it.');
+      return;
+    } else if(auth && JSON.stringify(auth) !== authBefore){
+      showToast('Backup restored. Your login is now the one saved in that backup.');
+      return;
+    }
     showToast('Backup restored.');
   });
 
@@ -3994,6 +4204,429 @@ window.MiniPDF = (function(){
     closeProfileEditSheet();
   });
 
+  // ---------- Login ----------
+  // The app opens behind a login screen. Only salted PBKDF2 hashes of the
+  // password and recovery answer are stored, never the words themselves.
+  // This keeps the log private from anyone who picks up the phone or laptop.
+  // It is a lock, not encryption: the backup file should still be kept private.
+  const RECOVERY_QUESTION = 'What brand of go-kart chassis did you win your first championship on?';
+  const AUTH_ITERATIONS = 120000;
+  const MIN_PASSWORD = 6;
+  const AUTO_LOCK_MS = 5 * 60 * 1000;               // locks after 5 minutes in the background
+  const REMEMBER_KEY = 'vessel-log-login-remember'; // this device only, never synced or backed up
+  const FAILS_KEY = 'vessel-log-login-fails';       // this device only
+  let auth = null;            // the saved login, or null before one is set up
+  let authState = 'checking'; // 'checking' | 'setup' | 'login' | 'recover' | 'unlocked'
+
+  const textEnc = new TextEncoder();
+  function bytesToHex(b){ return Array.from(b, x => x.toString(16).padStart(2, '0')).join(''); }
+  function hexToBytes(h){
+    const out = new Uint8Array(h.length / 2);
+    for(let i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+    return out;
+  }
+  function randomHex(n){
+    const b = new Uint8Array(n);
+    if(window.crypto && typeof crypto.getRandomValues === 'function') crypto.getRandomValues(b);
+    else for(let i = 0; i < n; i++) b[i] = Math.floor(Math.random() * 256);
+    return bytesToHex(b);
+  }
+
+  // Built-in SHA-256 / PBKDF2 for browsers without Web Crypto. It gives
+  // exactly the same result as crypto.subtle, so a login made on one device
+  // works on every other.
+  const SHA_K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,
+  ]);
+  function sha256(msg){
+    const len = msg.length;
+    const padLen = ((len + 9 + 63) >> 6) << 6;
+    const buf = new Uint8Array(padLen);
+    buf.set(msg);
+    buf[len] = 0x80;
+    const dv = new DataView(buf.buffer);
+    dv.setUint32(padLen - 8, Math.floor(len / 0x20000000));
+    dv.setUint32(padLen - 4, (len << 3) >>> 0);
+    const H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const W = new Uint32Array(64);
+    for(let off = 0; off < padLen; off += 64){
+      for(let i = 0; i < 16; i++) W[i] = dv.getUint32(off + i * 4);
+      for(let i = 16; i < 64; i++){
+        const a = W[i - 15], b = W[i - 2];
+        const s0 = ((a >>> 7) | (a << 25)) ^ ((a >>> 18) | (a << 14)) ^ (a >>> 3);
+        const s1 = ((b >>> 17) | (b << 15)) ^ ((b >>> 19) | (b << 13)) ^ (b >>> 10);
+        W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0;
+      }
+      let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for(let i = 0; i < 64; i++){
+        const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+        const t1 = (h + S1 + ((e & f) ^ (~e & g)) + SHA_K[i] + W[i]) | 0;
+        const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+        const t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+    }
+    const out = new Uint8Array(32);
+    const ov = new DataView(out.buffer);
+    for(let i = 0; i < 8; i++) ov.setUint32(i * 4, H[i]);
+    return out;
+  }
+  function hmacSha256(key, msg){
+    if(key.length > 64) key = sha256(key);
+    const inner = new Uint8Array(64 + msg.length), outer = new Uint8Array(96);
+    for(let i = 0; i < 64; i++){ const k = key[i] || 0; inner[i] = k ^ 0x36; outer[i] = k ^ 0x5c; }
+    inner.set(msg, 64);
+    outer.set(sha256(inner), 64);
+    return sha256(outer);
+  }
+  function pbkdf2Js(password, salt, iterations){
+    const block = new Uint8Array(salt.length + 4);
+    block.set(salt);
+    block[salt.length + 3] = 1;
+    let u = hmacSha256(password, block);
+    const out = u.slice();
+    for(let i = 1; i < iterations; i++){
+      u = hmacSha256(password, u);
+      for(let j = 0; j < 32; j++) out[j] ^= u[j];
+    }
+    return out;
+  }
+
+  async function deriveHex(secret, saltHex, iterations){
+    const pw = textEnc.encode(secret), salt = hexToBytes(saltHex);
+    try{
+      if(window.crypto && crypto.subtle && typeof crypto.subtle.importKey === 'function'){
+        const key = await crypto.subtle.importKey('raw', pw, 'PBKDF2', false, ['deriveBits']);
+        const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt, iterations }, key, 256);
+        return bytesToHex(new Uint8Array(bits));
+      }
+    }catch(e){ /* fall back to the built-in version */ }
+    return bytesToHex(pbkdf2Js(pw, salt, iterations));
+  }
+  async function makeSecret(text){
+    const salt = randomHex(16);
+    return { salt, iter: AUTH_ITERATIONS, hash: await deriveHex(text, salt, AUTH_ITERATIONS) };
+  }
+  async function checkSecret(text, rec){
+    if(!rec || !rec.salt || !rec.hash) return false;
+    const h = await deriveHex(text, rec.salt, rec.iter || AUTH_ITERATIONS);
+    if(h.length !== rec.hash.length) return false;
+    let diff = 0;
+    for(let i = 0; i < h.length; i++) diff |= h.charCodeAt(i) ^ rec.hash.charCodeAt(i);
+    return diff === 0;
+  }
+  const normUser = s => String(s || '').trim().toLowerCase();
+  // "Tony Kart", "tonykart" and "TONY-KART!" all count as the same answer.
+  const normAnswer = s => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  function parseAuth(raw){
+    const a = safeParse(raw, null);
+    return (a && typeof a === 'object' && a.username && a.pw && a.pw.salt && a.pw.hash) ? a : null;
+  }
+
+  // Device-only values (remember-me, failed tries) live in the browser's own
+  // storage, so they never sync to another device or go into a backup.
+  const deviceStorageOk = localStorageWorks();
+  const deviceMem = {};
+  function deviceGet(key){
+    if(deviceStorageOk){ try{ return localStorage.getItem(key); }catch(e){ /* fall through */ } }
+    return Object.prototype.hasOwnProperty.call(deviceMem, key) ? deviceMem[key] : null;
+  }
+  function deviceSet(key, value){
+    if(deviceStorageOk){
+      try{ if(value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); return; }
+      catch(e){ /* fall through */ }
+    }
+    if(value === null) delete deviceMem[key]; else deviceMem[key] = value;
+  }
+  // Remembering stores the password's salt: changing the password anywhere
+  // gives it a new salt, which signs out every remembered device.
+  function isRemembered(){
+    const r = deviceGet(REMEMBER_KEY);
+    return !!(r && auth && r === auth.pw.salt);
+  }
+
+  // After 5 wrong tries, wait 30 s, doubling each time up to 5 minutes.
+  function failState(){ return safeParse(deviceGet(FAILS_KEY), { count:0, until:0 }); }
+  function waitLeftMs(){ return Math.max(0, (failState().until || 0) - Date.now()); }
+  function noteFailure(){
+    const f = failState();
+    f.count = (f.count || 0) + 1;
+    if(f.count >= 5) f.until = Date.now() + Math.min(300000, 30000 * Math.pow(2, f.count - 5));
+    deviceSet(FAILS_KEY, JSON.stringify(f));
+  }
+  function waitMessage(ms){
+    const s = Math.ceil(ms / 1000);
+    return `Too many tries. Wait ${s > 60 ? Math.ceil(s / 60) + ' minutes' : s + ' seconds'}, then try again.`;
+  }
+
+  const authEl = id => document.getElementById(id);
+  const authPanels = { checking: authEl('authLoading'), setup: authEl('authSetupForm'), login: authEl('authLoginForm'), recover: authEl('authRecoverForm') };
+  const SECRET_INPUTS = ['setupPassword','setupPassword2','setupAnswer','loginPassword','recoverAnswer','recoverPassword','recoverPassword2','lcCurrent','lcPassword','lcPassword2','lcAnswer'];
+
+  function setAuthMsg(id, text){
+    const el = authEl(id);
+    el.textContent = text || '';
+    el.style.display = text ? 'block' : 'none';
+  }
+  function clearSecretInputs(){
+    SECRET_INPUTS.forEach(id=>{ authEl(id).value = ''; });
+    document.querySelectorAll('.auth-show').forEach(b=>{ b.textContent = 'Show'; authEl(b.dataset.target).type = 'password'; });
+  }
+  function hideToast(){
+    const t = document.getElementById('sslToast');
+    if(!t) return;
+    undoToken++;
+    clearTimeout(showToast.timer);
+    t.classList.remove('show', 'actionable');
+  }
+
+  function lockApp(state, notice){
+    authState = state;
+    document.body.classList.add('locked');
+    document.querySelectorAll('.overlay.show').forEach(o=>{ if(o.id !== 'restoreOverlay') o.classList.remove('show'); });
+    authEl('authAppTitle').textContent = document.getElementById('appTitle').textContent || DEFAULT_TITLE;
+    clearSecretInputs();
+    ['setupNotice','setupError','loginNotice','loginError','recoverError'].forEach(id => setAuthMsg(id, ''));
+    const question = (auth && auth.question) || RECOVERY_QUESTION;
+    authEl('setupQuestion').textContent = RECOVERY_QUESTION;
+    authEl('recoverQuestion').textContent = question;
+    if(state === 'setup'){
+      authEl('setupUsername').value = '';
+      setAuthMsg('setupNotice', notice);
+    } else if(state === 'login'){
+      authEl('loginUsername').value = auth ? auth.username : '';
+      authEl('rememberMe').checked = false;
+      authEl('rememberRow').style.display = deviceStorageOk ? '' : 'none';
+      setAuthMsg('loginNotice', notice);
+    } else if(state === 'recover'){
+      authEl('recoverUsername').value = auth ? auth.username : '';
+    }
+    Object.keys(authPanels).forEach(k=>{ authPanels[k].style.display = k === state ? '' : 'none'; });
+    window.scrollTo(0, 0);
+  }
+
+  function unlockApp(){
+    authState = 'unlocked';
+    hiddenAt = null;
+    clearSecretInputs();
+    document.body.classList.remove('locked');
+    window.scrollTo(0, 0);
+    renderLoginSection();
+  }
+
+  // Runs after every load (startup, cloud sync, restore).
+  function refreshAuthGate(){
+    renderLoginSection();
+    if(authState === 'checking' || authState === 'unlocked') return;
+    if(auth && authState === 'setup'){
+      lockApp('login', 'Your saved login was found. Log in to continue.');
+    } else if(!auth && (authState === 'login' || authState === 'recover')){
+      lockApp('setup');
+    }
+  }
+
+  function renderLoginSection(){
+    const line = authEl('loginStatusLine');
+    if(!auth){ line.textContent = 'No login set up yet.'; return; }
+    line.textContent = isRemembered()
+      ? `Logged in as ${auth.username}. This device keeps you logged in until you log out.`
+      : `Logged in as ${auth.username}. You’ll be asked for your password each time you open the app.`;
+  }
+
+  async function initAuth(cloudReady){
+    try{
+      await initialLoadPromise;
+      if(!auth && window.claude){
+        // A login set up on another device may still be on its way from the cloud.
+        await Promise.race([Promise.resolve(cloudReady).catch(()=>{}), new Promise(r=>setTimeout(r, 8000))]);
+      }
+    }catch(e){ console.warn('Login check', e); }
+    if(!auth){ lockApp('setup'); return; }
+    if(isRemembered()){ unlockApp(); return; }
+    lockApp('login');
+  }
+
+  function setBusy(btn, busy, label){
+    if(busy){ btn.dataset.label = btn.textContent; btn.textContent = label; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.label || btn.textContent; btn.disabled = false; }
+  }
+
+  document.querySelectorAll('.auth-show').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const input = authEl(btn.dataset.target);
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+    });
+  });
+
+  authEl('authSetupForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = authEl('setupSubmitBtn');
+    if(btn.disabled) return;
+    const username = authEl('setupUsername').value.trim();
+    const password = authEl('setupPassword').value;
+    const answer = normAnswer(authEl('setupAnswer').value);
+    setAuthMsg('setupError', '');
+    if(!username){ setAuthMsg('setupError', 'Choose a username.'); return; }
+    if(password.length < MIN_PASSWORD){ setAuthMsg('setupError', `Your password needs at least ${MIN_PASSWORD} characters.`); return; }
+    if(password !== authEl('setupPassword2').value){ setAuthMsg('setupError', 'The two passwords don’t match.'); return; }
+    if(answer.length < 2){ setAuthMsg('setupError', 'Answer the recovery question, so you can reset your password if you forget it.'); return; }
+    setBusy(btn, true, 'Saving…');
+    const next = { v:1, username, question: RECOVERY_QUESTION, pw: await makeSecret(password), rec: await makeSecret(answer) };
+    const ok = await storageSet(AUTH_KEY, JSON.stringify(next));
+    setBusy(btn, false);
+    if(!ok){ setAuthMsg('setupError', 'Couldn’t save your login on this device. Please try again.'); return; }
+    auth = next;
+    deviceSet(REMEMBER_KEY, null);
+    deviceSet(FAILS_KEY, null);
+    unlockApp();
+    showToast('Login created. You’ll need it next time you open the app.');
+  });
+
+  authEl('authLoginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = authEl('loginSubmitBtn');
+    if(btn.disabled || !auth) return;
+    const wait = waitLeftMs();
+    if(wait){ setAuthMsg('loginError', waitMessage(wait)); return; }
+    const username = authEl('loginUsername').value;
+    const password = authEl('loginPassword').value;
+    if(!username.trim() || !password){ setAuthMsg('loginError', 'Enter your username and password.'); return; }
+    setBusy(btn, true, 'Checking…');
+    const ok = normUser(username) === normUser(auth.username) && await checkSecret(password, auth.pw);
+    setBusy(btn, false);
+    if(!ok){
+      noteFailure();
+      const w = waitLeftMs();
+      setAuthMsg('loginError', w ? waitMessage(w) : 'That username or password isn’t right.');
+      authEl('loginPassword').value = '';
+      return;
+    }
+    deviceSet(FAILS_KEY, null);
+    deviceSet(REMEMBER_KEY, authEl('rememberMe').checked ? auth.pw.salt : null);
+    unlockApp();
+  });
+
+  authEl('forgotLink').addEventListener('click', ()=>{ if(auth) lockApp('recover'); });
+  authEl('backToLoginLink').addEventListener('click', ()=> lockApp('login'));
+  authEl('setupRestoreLink').addEventListener('click', ()=> openRestoreSheet());
+
+  authEl('authRecoverForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = authEl('recoverSubmitBtn');
+    if(btn.disabled || !auth) return;
+    const wait = waitLeftMs();
+    if(wait){ setAuthMsg('recoverError', waitMessage(wait)); return; }
+    const answer = normAnswer(authEl('recoverAnswer').value);
+    const password = authEl('recoverPassword').value;
+    setAuthMsg('recoverError', '');
+    if(!answer){ setAuthMsg('recoverError', 'Enter your answer to the recovery question.'); return; }
+    if(password.length < MIN_PASSWORD){ setAuthMsg('recoverError', `Your new password needs at least ${MIN_PASSWORD} characters.`); return; }
+    if(password !== authEl('recoverPassword2').value){ setAuthMsg('recoverError', 'The two passwords don’t match.'); return; }
+    setBusy(btn, true, 'Checking…');
+    if(!(await checkSecret(answer, auth.rec))){
+      setBusy(btn, false);
+      noteFailure();
+      const w = waitLeftMs();
+      setAuthMsg('recoverError', w ? waitMessage(w) : 'That answer doesn’t match. Check the spelling and try again.');
+      return;
+    }
+    const next = { ...auth, pw: await makeSecret(password) };
+    const ok = await storageSet(AUTH_KEY, JSON.stringify(next));
+    setBusy(btn, false);
+    if(!ok){ setAuthMsg('recoverError', 'Couldn’t save your new password on this device. Please try again.'); return; }
+    auth = next;
+    deviceSet(FAILS_KEY, null);
+    deviceSet(REMEMBER_KEY, null);
+    unlockApp();
+    showToast(`Password reset. Your username is ${auth.username}.`);
+  });
+
+  authEl('logoutBtn').addEventListener('click', ()=>{
+    deviceSet(REMEMBER_KEY, null);
+    hideToast();
+    lockApp(auth ? 'login' : 'setup');
+  });
+
+  // Lock again when the app comes back after a while in the background
+  // (iPhone keeps Home Screen apps open, so a reload alone isn't enough).
+  let hiddenAt = null;
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden'){ hiddenAt = Date.now(); return; }
+    if(authState === 'unlocked' && auth && hiddenAt && Date.now() - hiddenAt >= AUTO_LOCK_MS && !isRemembered()){
+      hideToast();
+      lockApp('login');
+    }
+    hiddenAt = null;
+  });
+
+  const loginChangeOverlay = authEl('loginChangeOverlay');
+  function showLoginChangeError(msg){
+    const el = authEl('loginChangeError');
+    el.textContent = msg || '';
+    el.style.display = msg ? 'block' : 'none';
+  }
+  authEl('loginChangeBtn').addEventListener('click', ()=>{
+    if(!auth) return;
+    clearSecretInputs();
+    authEl('lcUsername').value = auth.username;
+    authEl('lcQuestion').textContent = auth.question || RECOVERY_QUESTION;
+    showLoginChangeError('');
+    loginChangeOverlay.classList.add('show');
+  });
+  function closeLoginChangeSheet(){ loginChangeOverlay.classList.remove('show'); clearSecretInputs(); }
+  authEl('lcCancelBtn').addEventListener('click', closeLoginChangeSheet);
+  loginChangeOverlay.addEventListener('click', (e)=>{ if(e.target === loginChangeOverlay) closeLoginChangeSheet(); });
+
+  authEl('loginChangeForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = authEl('lcSaveBtn');
+    if(btn.disabled || !auth) return;
+    const wait = waitLeftMs();
+    if(wait){ showLoginChangeError(waitMessage(wait)); return; }
+    const current = authEl('lcCurrent').value;
+    const username = authEl('lcUsername').value.trim();
+    const password = authEl('lcPassword').value;
+    const answerRaw = authEl('lcAnswer').value;
+    const answer = normAnswer(answerRaw);
+    if(!current){ showLoginChangeError('Enter your current password.'); return; }
+    if(!username){ showLoginChangeError('Your username can’t be empty.'); return; }
+    if(password && password.length < MIN_PASSWORD){ showLoginChangeError(`Your new password needs at least ${MIN_PASSWORD} characters.`); return; }
+    if(password !== authEl('lcPassword2').value){ showLoginChangeError('The two new passwords don’t match.'); return; }
+    if(answerRaw.trim() && answer.length < 2){ showLoginChangeError('Your recovery answer needs at least 2 letters or numbers.'); return; }
+    setBusy(btn, true, 'Saving…');
+    if(!(await checkSecret(current, auth.pw))){
+      setBusy(btn, false);
+      noteFailure();
+      const w = waitLeftMs();
+      showLoginChangeError(w ? waitMessage(w) : 'Your current password isn’t right.');
+      return;
+    }
+    const wasRemembered = isRemembered();
+    const next = { ...auth, username };
+    if(password) next.pw = await makeSecret(password);
+    if(answer) next.rec = await makeSecret(answer);
+    const ok = await storageSet(AUTH_KEY, JSON.stringify(next));
+    setBusy(btn, false);
+    if(!ok){ showLoginChangeError('Couldn’t save on this device. Please try again.'); return; }
+    auth = next;
+    deviceSet(FAILS_KEY, null);
+    if(wasRemembered) deviceSet(REMEMBER_KEY, auth.pw.salt);
+    renderLoginSection();
+    closeLoginChangeSheet();
+    showToast('Login updated.');
+  });
+
   // ---------- Add to Home Screen ----------
   const A2HS_DISMISSED_KEY = 'vessel-log-a2hs-dismissed';
   const a2hsOverlay = document.getElementById('a2hsOverlay');
@@ -4034,7 +4667,7 @@ window.MiniPDF = (function(){
   }
 
   initialLoadPromise = loadEntries();
-  connectCloud();
+  initAuth(connectCloud());
 })();
 </script>
 </body>
